@@ -1,0 +1,45 @@
+# Raw and derived data (download via scripts; never commit)
+data/*
+!data/README.md
+
+# Local / ephemeral
+.venv/
+venv/
+.env
+.env.*
+*.log
+
+# Caches and tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+.cache/
+lightning_logs/
+
+# Experiment checkpoints and packing artefacts
+**/checkpoints/
+paper_pack/
+paper_pack.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Optional local outputs
+*.egg-info/
+dist/
+build/
+
+# Internal audit notes (keep on disk, never publish)
+AUDIT.md
+PREPUSH_AUDIT.md

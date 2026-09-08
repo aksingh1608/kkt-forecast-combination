@@ -1,0 +1,10 @@
+{
+  "dataset": "ETTh2",
+  "model": "NLinear",
+  "best_value": 11.720878641743765,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.99,
+    "ridge": 9.907162642808768
+  }
+}

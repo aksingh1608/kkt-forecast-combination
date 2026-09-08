@@ -1,0 +1,13 @@
+{
+  "dataset": "OPSD_DE_household",
+  "model": "DLinear",
+  "best_value": 0.2229191986253434,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.975,
+    "kernel_size": 13,
+    "ridge_trend": 9.929244436451244,
+    "ridge_seasonal": 0.005125050677629197,
+    "use_revin": false
+  }
+}

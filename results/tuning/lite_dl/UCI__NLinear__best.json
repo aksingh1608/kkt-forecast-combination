@@ -1,0 +1,10 @@
+{
+  "dataset": "UCI",
+  "model": "NLinear",
+  "best_value": 0.8398005721605324,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.99,
+    "ridge": 9.907162642808768
+  }
+}

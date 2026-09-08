@@ -1,0 +1,33 @@
+# Optional dependencies — deep learning zoo, Chronos, Streamlit UI
+# Not required to reproduce paper tables/figures (CPU artefacts).
+# Python 3.12.10 — pins from the same .venv as requirements.txt
+# Install after requirements.txt:
+#   pip install -r requirements-optional.txt
+# For GPU torch, replace the torch pin with the appropriate CUDA wheel first.
+
+accelerate==1.14.0
+altair==6.2.2
+chronos-forecasting==2.3.1
+coreforecast==0.0.18
+filelock==3.31.0
+fsspec==2026.6.0
+gitdb==4.0.12
+GitPython==3.1.52
+huggingface_hub==1.24.0
+lightning-utilities==0.15.3
+mpmath==1.3.0
+networkx==3.6.1
+neuralforecast==3.2.0
+nvidia-ml-py==13.610.43
+pydeck==0.9.3
+pytorch-lightning==2.5.6
+ray==2.56.1
+safetensors==0.8.0
+smmap==5.0.3
+streamlit==1.59.2
+sympy==1.14.0
+tokenizers==0.22.2
+torch==2.13.0
+torchmetrics==1.9.0
+transformers==5.14.1
+utilsforecast==0.2.16

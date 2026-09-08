@@ -1,0 +1,13 @@
+{
+  "dataset": "OPSD_DE_total",
+  "model": "DLinear",
+  "best_value": 8266.845020013161,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.975,
+    "kernel_size": 49,
+    "ridge_trend": 0.0016982414551479984,
+    "ridge_seasonal": 0.0809556302158091,
+    "use_revin": true
+  }
+}

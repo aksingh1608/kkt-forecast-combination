@@ -1,0 +1,10 @@
+{
+  "dataset": "OPSD_DE_total",
+  "model": "NLinear",
+  "best_value": 8369.818529338405,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.975,
+    "ridge": 0.0004561093837168769
+  }
+}

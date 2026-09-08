@@ -1,0 +1,13 @@
+{
+  "dataset": "UCI",
+  "model": "DLinear",
+  "best_value": 0.8378853478236411,
+  "best_params": {
+    "lookback": 336,
+    "clip_quantile": 0.95,
+    "kernel_size": 7,
+    "ridge_trend": 9.11601758546547,
+    "ridge_seasonal": 33.05853011766085,
+    "use_revin": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "dataset": "ETTh1",
+  "model": "DLinear",
+  "best_value": 2.7544676554297616,
+  "best_params": {
+    "lookback": 24,
+    "clip_quantile": 0.95,
+    "kernel_size": 13,
+    "ridge_trend": 3.9892547432416805,
+    "ridge_seasonal": 0.006617029027380631,
+    "use_revin": false
+  }
+}

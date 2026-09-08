@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper (preferred) using the metadata below."
+type: software
+title: "Convex Forecast Combination and Sparsity via KKT Boundaries: Multi-Dataset Benchmarking in Energy Time Series"
+version: "1.0.0"
+date-released: "2026-01-01"
+license: Apache-2.0
+repository-code: "https://github.com/aksingh1608/kkt-forecast-combination"
+doi: "10.0000/TODO-REPLACE-WITH-DOI"
+authors:
+  - family-names: Singh
+    given-names: Aryan Kumar
+    email: aksingh5114@gmail.com
+    orcid: "https://orcid.org/0009-0003-8791-1869"
+    affiliation: "Berlin School of Business and Innovation, Berlin, Germany"
+  - family-names: Al Farid
+    given-names: Fahmid
+  - family-names: Al Qwaid
+    given-names: Marran
+  - family-names: Miah
+    given-names: Abu Saleh Musa
+  - family-names: Islam
+    given-names: Syed Mohammed Shamsul
+  - family-names: Husen
+    given-names: Mohd Nizam
+preferred-citation:
+  type: article
+  title: "Convex Forecast Combination and Sparsity via KKT Boundaries: Multi-Dataset Benchmarking in Energy Time Series"
+  year: 2026
+  authors:
+    - family-names: Singh
+      given-names: Aryan Kumar
+      orcid: "https://orcid.org/0009-0003-8791-1869"
+    - family-names: Al Farid
+      given-names: Fahmid
+    - family-names: Al Qwaid
+      given-names: Marran
+    - family-names: Miah
+      given-names: Abu Saleh Musa
+    - family-names: Islam
+      given-names: Syed Mohammed Shamsul
+    - family-names: Husen
+      given-names: Mohd Nizam
+  journal: "IEEE Transactions on Smart Grid (under submission)"
+  doi: "10.0000/TODO-REPLACE-WITH-DOI"
