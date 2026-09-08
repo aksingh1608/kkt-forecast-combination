@@ -130,7 +130,7 @@ def _plot_matplotlib(
     fig.legend(handles, labels, loc="lower center", ncol=min(4, len(labels)),
                bbox_to_anchor=(0.5, -0.08), frameon=False)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, bbox_inches="tight")
+    fig.savefig(out_path, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
     logger.info("Wrote %s", out_path)
 

@@ -77,7 +77,7 @@ def main() -> None:
     )
     out_path = args.out or (args.in_dir / "figures" / "kkt_boundary.pdf")
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, bbox_inches="tight")
+    fig.savefig(out_path, bbox_inches="tight", pad_inches=0.05)
     logger.info("Wrote %s", out_path)
 
     if args.table_out:

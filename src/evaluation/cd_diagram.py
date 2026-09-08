@@ -109,57 +109,63 @@ def plot_cd_diagram(
     names = avg_ranks.index.tolist()
     ranks = avg_ranks.values
 
-    fig, ax = plt.subplots(figsize=(10, 1.5 + 0.25 * n))
-    ax.set_xlim(0, n + 1)
-    ax.set_ylim(-1.0 - 0.25 * n, 1.5)
-    ax.invert_yaxis()
+    # Height tracks how many labels hang on each side (≈ n/2 rows).
+    n_rows = (n + 1) // 2
+    fig, ax = plt.subplots(figsize=(10, 1.6 + 0.28 * n_rows))
+    ax.set_xlim(-0.5, n + 1.5)
     ax.axis("off")
 
-    # Top axis with rank scale
+    # Top axis with rank scale (y = 0). Labels hang downward (negative y).
+    # CD bar and cliques sit just above the axis (small positive y).
     ax.plot([0.5, n + 0.5], [0, 0], "k", lw=1.2)
     for r in range(1, n + 1):
-        ax.plot([r, r], [0, -0.05 * (1 + 0.05 * n)], "k", lw=1.2)
-        ax.text(r, -0.10 * (1 + 0.05 * n), f"{r}",
-                ha="center", va="top", fontsize=9)
+        ax.plot([r, r], [0, -0.05], "k", lw=1.2)
+        ax.text(r, -0.12, f"{r}", ha="center", va="top", fontsize=9)
 
     # Names + ranks: split left/right of midpoint for readability.
     midpoint = (n + 1) / 2
+    y_min = -0.12
     for i, (name, rank) in enumerate(zip(names, ranks)):
         side_left = rank <= midpoint
-        y_text = -0.30 - 0.18 * (i if side_left else (n - 1 - i))
+        row = i if side_left else (n - 1 - i)
+        y_text = -0.35 - 0.28 * row
+        y_min = min(y_min, y_text)
         x_text = 0.05 if side_left else n + 0.95
         ax.plot([rank, rank], [0, y_text + 0.05], "k:", lw=0.8)
-        ax.plot([rank, x_text + (0 if side_left else 0)], [y_text + 0.05, y_text + 0.05],
-                "k", lw=0.8)
+        ax.plot([rank, x_text], [y_text + 0.05, y_text + 0.05], "k", lw=0.8)
         ax.text(
             x_text, y_text + 0.05,
             f"{name}  ({rank:.2f})" if side_left else f"({rank:.2f})  {name}",
             ha="left" if side_left else "right", va="center", fontsize=10,
         )
 
-    # CD bar (legend)
-    ax.plot([1, 1 + cd], [0.6, 0.6], "k", lw=2.5)
-    ax.text(1 + cd / 2, 0.85, f"CD = {cd:.2f}",
+    # CD bar (legend) just above the rank axis
+    ax.plot([1, 1 + cd], [0.55, 0.55], "k", lw=2.5)
+    ax.text(1 + cd / 2, 0.78, f"CD = {cd:.2f}",
             ha="center", va="center", fontsize=10)
 
     # Connect non-significantly-different cliques
     # Build cliques: groups where max(rank) - min(rank) <= cd.
     clique_levels: list[float] = []
+    y_max = 0.78
     for i in range(n):
         for j in range(i + 1, n):
             if ranks[j] - ranks[i] > cd:
                 continue
             # Find a vertical level that doesn't collide.
-            level = 0.15
+            level = 0.18
             while any(abs(level - lv) < 0.03 for lv in clique_levels):
                 level += 0.05
             clique_levels.append(level)
+            y_max = max(y_max, level)
             ax.plot([ranks[i] - 0.05, ranks[j] + 0.05],
                     [level, level], "k", lw=4, solid_capstyle="round")
             break
 
-    ax.set_title(title, pad=20)
-    fig.tight_layout()
+    # Tight ylim — empty axes area is included in bbox_inches="tight".
+    ax.set_ylim(y_min - 0.15, y_max + 0.25)
+    ax.set_title(title, pad=6)
+    fig.tight_layout(pad=0.2)
     return fig, CDResult(
         avg_ranks=avg_ranks, cd=cd, n_datasets=rank_matrix.shape[0],
         alpha=alpha, figure=fig,

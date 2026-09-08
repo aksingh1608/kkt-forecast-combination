@@ -48,8 +48,8 @@ def _save(fig, stem: Path) -> None:
     stem.parent.mkdir(parents=True, exist_ok=True)
     pdf = stem.with_suffix(".pdf")
     png = stem.with_suffix(".png")
-    fig.savefig(pdf, bbox_inches="tight")
-    fig.savefig(png, dpi=300, bbox_inches="tight")
+    fig.savefig(pdf, bbox_inches="tight", pad_inches=0.05)
+    fig.savefig(png, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
     print(f"wrote {pdf.name} / {png.name}")
 

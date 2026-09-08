@@ -84,8 +84,12 @@ def main() -> None:
     if args.include_predictions:
         _copy_tree(in_dir / "predictions", out / "results" / "predictions")
 
-    for file_name in ["README.md", "PAPER_README.md", "requirements.txt"]:
-        _copy_file(Path(file_name), out / file_name)
+    for src_name, dst_name in [
+        ("README.md", "README.md"),
+        ("docs/PAPER_README.md", "PAPER_README.md"),
+        ("requirements.txt", "requirements.txt"),
+    ]:
+        _copy_file(Path(src_name), out / dst_name)
 
     notes = out / "METHOD_NOTES.md"
     if not notes.exists():

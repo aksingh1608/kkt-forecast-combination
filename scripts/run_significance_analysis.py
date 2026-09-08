@@ -129,7 +129,7 @@ def main() -> None:
                     dm, title=f"DM vs. {dm['reference'].iloc[0]} — {dataset} ({protocol})"
                 )
                 fpath = fig_dir / f"dm_heatmap__{dataset}__{protocol}.pdf"
-                fig.savefig(fpath, bbox_inches="tight")
+                fig.savefig(fpath, bbox_inches="tight", pad_inches=0.05)
                 logger.info("Wrote %s", fpath)
                 import matplotlib.pyplot as _plt
                 _plt.close(fig)
@@ -161,7 +161,7 @@ def main() -> None:
                     ranks, title=f"CD diagram — {protocol} ({args.metric})"
                 )
                 fpath = fig_dir / f"cd_diagram__{protocol}__{args.metric}.pdf"
-                fig.savefig(fpath, bbox_inches="tight")
+                fig.savefig(fpath, bbox_inches="tight", pad_inches=0.05)
                 logger.info("Wrote %s (CD=%.2f, n_datasets=%d)",
                             fpath, cd.cd, cd.n_datasets)
                 import matplotlib.pyplot as _plt

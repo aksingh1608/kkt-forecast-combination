@@ -13,7 +13,7 @@ Companion code for the manuscript under submission to *IEEE Transactions on Smar
 
 A **Convex Stacking Ensemble (CSE)** blends five members (SARIMA, Holt–Winters, LightGBM, CatBoost, Extra-Trees) with non-negative least squares on a validation tail, then projects weights onto the simplex and refits members on the full training set. Under recursion the ensemble rolls out as one unit.
 
-Because validation errors of weaker members are often large and highly correlated with the best tree, the simplex optimum puts nearly all mass on trees. The KKT geometry of that problem yields an exclusion boundary \(\rho_i \ge \sigma_{\mathrm{best}}/\sigma_i\): members above it take weight exactly zero. Details: [`docs/method.md`](docs/method.md).
+Because validation errors of weaker members are often large and highly correlated with the best tree, the simplex optimum puts nearly all mass on trees. The KKT geometry of that problem yields an exclusion boundary $\rho_i \ge \sigma_{\mathrm{best}}/\sigma_i$: members above it take weight exactly zero. Details: [`docs/method.md`](docs/method.md).
 
 ## Key results
 
@@ -24,11 +24,12 @@ Every number links to a file under [`results/`](results/). Rank definition: `sci
 | Tree mass of CSE weights | 1.000 on four series; 0.889 on OPSD household | [`results/cse_weights_by_dataset.csv`](results/cse_weights_by_dataset.csv) |
 | Exact single-member collapse | ETTh2 → LightGBM weight 1.0 | same |
 | KKT boundary vs NNLS zeros | 17/20 exact; 11 admissible; 8 with positive weight | same (+ diagnostics) |
-| OPSD-N SARIMA scale | \(\sigma\) ≈ 243× the leader; tiny positive weight | same |
+| OPSD-N SARIMA scale | $\sigma$ ≈ 243× the leader; tiny positive weight | same |
 | Friedman (one-step RMSE) | χ² = 51.77, p = 4.06×10⁻⁵ | [`results/significance/friedman_summary.csv`](results/significance/friedman_summary.csv) |
 | Friedman (recursive RMSE) | χ² = 19.36, p = 0.370 | same |
 | CSE mean rank (one-step) | **4.3** | [`results/leaderboards.csv`](results/leaderboards.csv) |
 | CSE vs RMSE leader (Holm α=0.05) | win OPSD-N; tie ETTh2 & UCI; **loss ETTh1 & OPSD household** | [`results/significance/dm_matrix__*__one_step.csv`](results/significance/) |
+| CSE training cost | about 50 to 4000 times HistGradientBoosting across the five datasets, median near 360 | [`results/leaderboards.csv`](results/leaderboards.csv) |
 
 Negative results are intentional: under one-step evaluation CSE is not uniformly best. Losses (significant vs the RMSE leader): **ETTh1** (vs Ridge) and **OPSD_DE_household** (vs QuantileLightGBM). See [`docs/rank_and_dm.md`](docs/rank_and_dm.md).
 
@@ -122,6 +123,6 @@ Please cite the **paper**, not only this repository. Metadata: [`CITATION.cff`](
 
 - Code and documentation: [Apache License 2.0](LICENSE). See [NOTICE](NOTICE).
 - Datasets: upstream terms only — [DATA.md](DATA.md).
-- Corresponding author: Aryan Kumar Singh — aksingh5114@gmail.com — ORCID [0009-0003-8791-1869](https://orcid.org/0009-0003-8791-1869) — [github.com/aksingh1608](https://github.com/aksingh1608).
+- Corresponding author: Aryan Kumar Singh — <PUT THE ADDRESS YOU WANT HERE> — ORCID [0009-0003-8791-1869](https://orcid.org/0009-0003-8791-1869) — [github.com/aksingh1608](https://github.com/aksingh1608).
 
 Feature column listing for methods text: [`docs/features.md`](docs/features.md).
