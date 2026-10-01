@@ -76,13 +76,13 @@ class CSEDiagnostics:
     dataset: str
     member_names: list[str]
     weights: np.ndarray                    # shape (K,), sum = 1
-    sigma: np.ndarray                      # shape (K,), std of validation errors
-    rho: np.ndarray                        # shape (K, K), error-correlation matrix
-    Sigma: np.ndarray                      # shape (K, K), error-covariance matrix
+    sigma: np.ndarray                      # shape (K,), validation RMSE (uncentred)
+    rho: np.ndarray                        # shape (K, K), uncentred error correlation
+    Sigma: np.ndarray                      # shape (K, K), uncentred second moments E'E/n
     validation_errors: np.ndarray          # shape (K, n_val), signed errors
     blend_error: np.ndarray                # shape (n_val,), signed error of the blend
     best_member_idx: int                   # argmin sigma[i]
-    kkt_lambda: float                      # common value of (Σw)_i for active members
+    kkt_lambda: float                      # λ = w'Σw, equal to (Σw)_i for active members
     kkt_residuals: np.ndarray              # shape (K,), (Σw)_i - λ (≥ 0 at optimum)
     n_validation: int
     extra: dict = field(default_factory=dict)
@@ -110,13 +110,26 @@ class CSEDiagnostics:
 # =============================================================================
 # Core computations
 # =============================================================================
-def _covariance_and_correlation(errors: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return (Σ, ρ, σ) from an (n, K) array of validation errors."""
+def _covariance_and_correlation(
+    errors: np.ndarray, centred: bool = False
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return (Σ, ρ, σ) from an (n, K) array of validation errors.
+
+    By default the moments are **uncentred**: ``Σ = E'E / n``, ``σ_i`` is
+    the validation RMSE of member ``i`` and ``ρ_ij = Σ_ij / (σ_i σ_j)``.
+    That is the matrix in the stacking objective ``w' Σ w``, so it is the
+    one Proposition 1 and the KKT conditions refer to. A biased member
+    (large mean error) is penalised for its bias, as the optimiser does.
+
+    ``centred=True`` reproduces the pre-v1.1 behaviour (covariance and
+    Pearson correlation). It does not match the objective and should only
+    be used for comparison.
+    """
     n = errors.shape[0]
     if n < 2:
         raise ValueError("Need at least 2 validation points for covariance.")
-    centred = errors - errors.mean(axis=0, keepdims=True)
-    Sigma = (centred.T @ centred) / n
+    E = errors - errors.mean(axis=0, keepdims=True) if centred else errors
+    Sigma = (E.T @ E) / n
     sigma = np.sqrt(np.clip(np.diag(Sigma), 0.0, None))
     denom = np.outer(sigma, sigma)
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -130,6 +143,7 @@ def compute_cse_diagnostics(
     *,
     dataset: str = "unknown",
     extra: dict | None = None,
+    centred: bool = False,
 ) -> CSEDiagnostics:
     """Assemble a :class:`CSEDiagnostics` from validation errors + NNLS weights.
 
@@ -165,13 +179,11 @@ def compute_cse_diagnostics(
     if total > 0:
         w = w / total
 
-    Sigma, rho, sigma = _covariance_and_correlation(err_matrix)
+    Sigma, rho, sigma = _covariance_and_correlation(err_matrix, centred=centred)
     Sigma_w = Sigma @ w
-    active = w > 1e-6
-    if active.any():
-        lam = float(Sigma_w[active].mean())
-    else:
-        lam = float("nan")
+    # At the simplex optimum the multiplier equals the objective value:
+    # λ = w'Σw (multiply the stationarity condition by w and sum).
+    lam = float(w @ Sigma_w) if total > 0 else float("nan")
     kkt_residuals = Sigma_w - lam
 
     blend_error = err_matrix @ w
@@ -195,7 +207,12 @@ def compute_cse_diagnostics(
 
 
 def kkt_conditions(diag: CSEDiagnostics, tol: float = 1e-4) -> pd.DataFrame:
-    """Human-readable KKT verification table for a single dataset."""
+    """Human-readable KKT verification table for a single dataset.
+
+    ``tol`` is relative to λ, so the check is scale-free (kW or MW).
+    """
+    scale = abs(diag.kkt_lambda) if np.isfinite(diag.kkt_lambda) and diag.kkt_lambda != 0 else 1.0
+    rel = diag.kkt_residuals / scale
     rows = []
     for i, name in enumerate(diag.member_names):
         rows.append({
@@ -204,10 +221,12 @@ def kkt_conditions(diag: CSEDiagnostics, tol: float = 1e-4) -> pd.DataFrame:
             "sigma_w_i": float((diag.Sigma @ diag.weights)[i]),
             "lambda": float(diag.kkt_lambda),
             "kkt_residual": float(diag.kkt_residuals[i]),
+            "kkt_residual_rel": float(rel[i]),
             "condition": (
-                "active (equality)" if diag.weights[i] > tol
+                ("active (equality)" if abs(rel[i]) <= tol else "VIOLATION")
+                if diag.weights[i] > 1e-9
                 else ("inactive (inequality satisfied)"
-                      if diag.kkt_residuals[i] >= -tol else "VIOLATION")
+                      if rel[i] >= -tol else "VIOLATION")
             ),
         })
     return pd.DataFrame(rows)

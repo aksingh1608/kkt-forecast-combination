@@ -70,22 +70,89 @@ logger = logging.getLogger(__name__)
 
 
 def _solve_convex_weights(
-    P: np.ndarray, y: np.ndarray, ridge: float = 1e-3
+    P: np.ndarray, y: np.ndarray, ridge: float = 0.0
 ) -> np.ndarray:
-    """Solve  min_w ||P w - y||² + λ||w||²   s.t. w ≥ 0,  Σw = 1.
+    """Solve  min_w ||y - P w||^2   s.t.  w >= 0,  sum(w) = 1   exactly.
 
-    Uses NNLS with a Tikhonov augmentation row (stabilises against
-    near-collinear ensembles), then normalises by L1.
+    On the simplex the residual is ``y - P w = E w`` with ``E = y - P`` the
+    member error matrix, so the objective equals ``n * w' S w`` with
+    ``S = E'E / n`` the *uncentred* second-moment matrix of the errors.
+    This is the quadratic programme analysed in the paper (Section IV);
+    its KKT conditions are ``(S w)_i >= lambda`` with equality when
+    ``w_i > 0`` and ``lambda = w' S w``.
+
+    Earlier releases ran NNLS without the sum constraint and divided by
+    the L1 norm afterwards. That returns a different point whenever the
+    raw NNLS weights do not sum to one, so it was replaced.
+
+    Parameters
+    ----------
+    ridge
+        Optional Tikhonov term added to the diagonal of ``S`` (relative to
+        its mean diagonal). The default 0.0 gives the exact problem of the
+        paper; keep it at zero for any reported result.
     """
-    from scipy.optimize import nnls
+    P = np.asarray(P, dtype=float)
+    y = np.asarray(y, dtype=float).ravel()
+    E = y[:, None] - P
+    S = (E.T @ E) / max(len(y), 1)
+    return solve_simplex_qp(S, ridge=ridge)
 
-    n_models = P.shape[1]
-    P_aug = np.vstack([P, np.sqrt(ridge) * np.eye(n_models)])
-    y_aug = np.concatenate([y, np.zeros(n_models)])
-    w, _ = nnls(P_aug, y_aug)
-    if w.sum() <= 0:
-        return np.full(n_models, 1.0 / n_models)
-    return w / w.sum()
+
+def solve_simplex_qp(S: np.ndarray, ridge: float = 0.0) -> np.ndarray:
+    """Exact minimiser of ``w' S w`` over the probability simplex.
+
+    For ``K <= 12`` members the solver enumerates the faces of the simplex:
+    on each face the equality-constrained optimum has the closed form
+    ``w = S_AA^{-1} 1 / (1' S_AA^{-1} 1)``, and the feasible face with the
+    lowest objective is the global optimum because the problem is convex.
+    For larger ``K`` it falls back to SLSQP on a rescaled problem.
+    """
+    import itertools
+
+    S = np.asarray(S, dtype=float)
+    K = S.shape[0]
+    scale = float(np.mean(np.diag(S)))
+    if not np.isfinite(scale) or scale <= 0:
+        return np.full(K, 1.0 / K)
+    Sn = S / scale + ridge * np.eye(K)
+
+    if K <= 12:
+        best_val, best_w = np.inf, None
+        for r in range(1, K + 1):
+            for idx in itertools.combinations(range(K), r):
+                A = Sn[np.ix_(idx, idx)]
+                try:
+                    x = np.linalg.solve(A, np.ones(r))
+                except np.linalg.LinAlgError:
+                    continue
+                tot = x.sum()
+                if not np.isfinite(tot) or tot <= 0:
+                    continue
+                x = x / tot
+                if (x < -1e-12).any():
+                    continue
+                w = np.zeros(K)
+                w[list(idx)] = np.clip(x, 0.0, None)
+                w /= w.sum()
+                val = float(w @ Sn @ w)
+                if val < best_val - 1e-15:
+                    best_val, best_w = val, w
+        if best_w is not None:
+            return best_w
+
+    from scipy.optimize import minimize
+
+    res = minimize(
+        lambda w: float(w @ Sn @ w), np.full(K, 1.0 / K),
+        jac=lambda w: 2.0 * Sn @ w, method="SLSQP",
+        bounds=[(0.0, 1.0)] * K,
+        constraints={"type": "eq", "fun": lambda w: w.sum() - 1.0},
+        options={"ftol": 1e-14, "maxiter": 2000},
+    )
+    w = np.clip(res.x, 0.0, None)
+    w[w < 1e-10] = 0.0
+    return w / w.sum() if w.sum() > 0 else np.full(K, 1.0 / K)
 
 
 @dataclass
@@ -169,10 +236,10 @@ class FAHEForecaster(ForecastModel):
         if not val_preds:
             raise RuntimeError("FAHE: every base learner failed to fit.")
 
-        # 3. Solve NNLS for convex weights on the validation window. -----
+        # 3. Solve the simplex-constrained QP on the validation window. --
         model_names = list(val_preds.keys())
         P_val = np.column_stack([val_preds[m] for m in model_names])
-        w = _solve_convex_weights(P_val, y_val.values, ridge=1e-3)
+        w = _solve_convex_weights(P_val, y_val.values)
         self.weights_ = {name: float(weight) for name, weight in zip(model_names, w)}
         logger.info("CSE learned weights: %s", self.weights_)
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased: exact simplex solver and uncentred KKT diagnostics
+
+### Changed (affects reported numbers)
+
+- `src/models/novel.py`: `_solve_convex_weights` now solves
+  `min ||y - Pw||^2  s.t. w >= 0, sum(w) = 1` exactly (new public helper
+  `solve_simplex_qp`). The previous code ran NNLS with a ridge row and then
+  divided by the L1 norm, which is a different optimisation problem from the
+  one analysed in the paper whenever the raw NNLS weights do not sum to one.
+- `src/evaluation/kkt_analysis.py`: `Sigma`, `sigma` and `rho` are now
+  **uncentred** (`E'E/n`), matching the objective `w' Sigma w`. The old centred
+  statistics remain available through `centred=True`. `kkt_lambda` is now
+  `w' Sigma w`, and `kkt_conditions` uses a tolerance relative to lambda.
+
+### Added
+
+- `scripts/recheck_simplex_kkt.py`: re-solves the weights from the stored
+  validation errors, with no model refit, and prints the Proposition 1 table
+  and the full KKT check. Output: `results/tables/kkt_simplex_recheck.csv`.
+- Four tests in `tests/test_kkt.py` covering the solver and the diagnostics.
+
+### Still to regenerate
+
+The files under `results/` (leaderboards, weights, significance, rolling
+origin, figures, tables) were produced with the old solver. Run
+`make benchmark rolling stats figures tables`, then update the expected
+values in `scripts/verify_claims.py` (OPSD household tree mass moves from
+0.889 to about 0.965) and the manuscript tables.
+
 ## Unreleased — Phase 1 restructure (behaviour-preserving)
 
 ### Layout
