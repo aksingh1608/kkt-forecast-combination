@@ -1,0 +1,16 @@
+\begin{tabular}{llrrrrr}
+\toprule
+Data & Model & Lookback & Clip $q$ & Val RMSE & Test RMSE & Test $R^2$ \\
+\midrule
+UCI & NLinear & 336 & 0.99 & 0.840 & 0.950 & 0.187 \\
+UCI & DLinear & 336 & 0.95 & 0.838 & 0.950 & 0.188 \\
+OPSD-H & NLinear & 48 & 0.995 & 0.364 & 0.176 & $-$0.014 \\
+OPSD-H & DLinear & 336 & 0.975 & 0.223 & 0.208 & $-$0.411 \\
+OPSD-N & NLinear & 336 & 0.975 & 8\,370 & 6\,695 & 0.537 \\
+OPSD-N & DLinear & 336 & 0.975 & 8\,267 & 6\,616 & 0.548 \\
+ETTh1 & NLinear & 96 & 0.95 & 5.756 & 6.640 & $-$2.737 \\
+ETTh1 & DLinear & 24 & 0.95 & 2.754 & 7.835 & $-$4.204 \\
+ETTh2 & NLinear & 336 & 0.99 & 11.72 & 22.52 & $-$3.503 \\
+ETTh2 & DLinear & 24 & 0.95 & 7.510 & 24.26 & $-$4.225 \\
+\bottomrule
+\end{tabular}

@@ -246,20 +246,29 @@ def proposition1_frontier(sigma_ratio: np.ndarray) -> np.ndarray:
 # =============================================================================
 # Signature paper figure
 # =============================================================================
+DATASET_LABEL = {"UCI": "UCI", "OPSD_DE_household": "OPSD-H", "OPSD_DE_total": "OPSD-N",
+                 "ETTh1": "ETTh1", "ETTh2": "ETTh2"}
+MEMBER_LABEL = {"sarima": "SARIMA", "hw": "Holt-Winters", "lgbm": "LightGBM",
+                "catboost": "CatBoost", "extratrees": "ExtraTrees"}
+
 def plot_kkt_boundary(
     diagnostics: CSEDiagnostics | list[CSEDiagnostics],
     *,
     title: str | None = None,
     annotate: bool = True,
     figsize: tuple[float, float] | None = None,
+    ncols: int = 3,
 ):
     """Render the (σ_ratio, ρ) exclusion diagram of Proposition 1.
 
-    Each base learner is plotted at (σ_i/σ_best, ρ_{i,best}). The curve
-    ``ρ = σ_best / σ_i`` is overlaid; points above it are KKT-excluded.
-    When a list of diagnostics is supplied, a small-multiples grid is
-    rendered (one panel per dataset) with a shared legend — the paper's
-    Figure "KKT boundary".
+    Each non-leading member is plotted at (σ_i/σ_best, ρ_{i,best}) on a
+    logarithmic ratio axis, against the curve ρ = σ_best/σ_i. Members above
+    the curve are excluded by Proposition 1. Markers: filled circle for a
+    positive weight, cross for an excluded member with zero weight, and an
+    open circle for an admissible member that the full KKT system zeroed
+    (collinearity). Colours are from the Okabe-Ito set, which is safe for
+    colour-vision deficiency, and the three cases also differ in marker
+    shape so they do not depend on colour alone.
     """
     import matplotlib.pyplot as plt
 
@@ -268,58 +277,92 @@ def plot_kkt_boundary(
     if n == 0:
         raise ValueError("plot_kkt_boundary: no diagnostics supplied.")
 
-    ncols = min(n, 3)
+    c_pos, c_excl, c_coll, c_lead = "#009E73", "#D55E00", "#E69F00", "#000000"
+    label_of = lambda n: MEMBER_LABEL.get(n, n)  # noqa: E731
+    ncols = min(n, ncols)
     nrows = int(np.ceil(n / ncols))
-    fs = figsize or (5.2 * ncols, 4.3 * nrows)
+    fs = figsize or (3.4 * ncols, 2.9 * nrows)
     fig, axes = plt.subplots(nrows, ncols, figsize=fs, squeeze=False)
-
-    x_grid = np.linspace(1.0, 4.0, 200)
-    y_curve = proposition1_frontier(x_grid)
 
     for k, diag in enumerate(diags):
         ax = axes[k // ncols][k % ncols]
-        ax.plot(x_grid, y_curve, "k--", lw=1.2,
-                label=r"$\rho = \sigma_{\mathrm{best}}/\sigma_i$  (Prop. 1)")
-        ax.fill_between(x_grid, y_curve, 1.05, color="tab:red",
-                        alpha=0.08, label="Excluded (w=0)")
-        ax.fill_between(x_grid, -1.05, y_curve, color="tab:green",
-                        alpha=0.06, label="Admissible (w>0 possible)")
-
         best = diag.best_member_idx
         s_best = diag.sigma[best]
+        ratios = [diag.sigma[i] / s_best for i in range(len(diag.member_names)) if i != best]
+        x_max = max(4.0, 1.6 * max(ratios)) if ratios else 4.0
+        x_grid = np.logspace(0, np.log10(x_max), 300)
+        y_curve = proposition1_frontier(x_grid)
+        ax.fill_between(x_grid, y_curve, 1.08, color=c_excl, alpha=0.07, lw=0)
+        ax.fill_between(x_grid, -0.3, y_curve, color=c_pos, alpha=0.06, lw=0)
+        ax.plot(x_grid, y_curve, color="black", ls="--", lw=1.0,
+                label=r"$\rho=\sigma_{\mathrm{best}}/\sigma_i$")
+
+        placed: list[tuple[float, float]] = []
         for i, name in enumerate(diag.member_names):
             if i == best:
                 continue
-            xr = diag.sigma[i] / s_best if s_best > 0 else np.nan
+            xr = diag.sigma[i] / s_best
             yr = diag.rho[i, best]
-            active = diag.weights[i] > 1e-6
-            color = "tab:green" if active else "tab:red"
-            marker = "o" if active else "X"
-            ax.scatter([xr], [yr], s=110, color=color, marker=marker,
-                       edgecolor="black", linewidth=0.8, zorder=3)
+            active = diag.weights[i] > 1e-9
+            admissible = yr < 1.0 / xr
+            if active:
+                ax.scatter([xr], [yr], s=48, color=c_pos, marker="o", edgecolor="black",
+                           linewidth=0.6, zorder=3, label="admitted ($w_i>0$)")
+            elif admissible:
+                ax.scatter([xr], [yr], s=52, facecolor="white", edgecolor=c_coll, marker="o",
+                           linewidth=1.6, zorder=3, label="admissible, zeroed by full KKT")
+            else:
+                ax.scatter([xr], [yr], s=52, color=c_excl, marker="X", edgecolor="black",
+                           linewidth=0.5, zorder=3, label="excluded ($w_i=0$)")
             if annotate:
-                ax.annotate(f"{name}\nw={diag.weights[i]:.2f}",
-                            (xr, yr), textcoords="offset points",
-                            xytext=(6, 6), fontsize=8)
-        ax.scatter([1.0], [1.0], s=160, color="gold", marker="*",
-                   edgecolor="black", zorder=4,
-                   label=f"best = {diag.member_names[best]}")
+                w = diag.weights[i]
+                wl = "0" if w <= 1e-9 else (f"{w:.2f}" if w >= 5e-3 else f"{w:.0e}")
+                # Alternate the label side when a neighbour sits close by, so
+                # labels of near-collinear members do not overlap.
+                crowded = sum(1 for (px, py) in placed
+                              if abs(np.log10(xr) - np.log10(px)) < 0.12 and abs(yr - py) < 0.12)
+                offsets = [(6, 5), (6, -16), (-52, 9), (-52, -18)]
+                dx, dy = offsets[crowded % len(offsets)]
+                placed.append((xr, yr))
+                ax.annotate(f"{label_of(name)}, $w$={wl}", (xr, yr), textcoords="offset points",
+                            xytext=(dx, dy), fontsize=6.3)
+        ax.scatter([1.0], [1.0], s=90, color="#F0E442", marker="*", edgecolor=c_lead,
+                   linewidth=0.6, zorder=4, label="leader (1, 1)")
 
-        ax.set_xlim(0.95, 4.0)
-        ax.set_ylim(-0.15, 1.05)
-        ax.set_xlabel(r"$\sigma_i / \sigma_{\mathrm{best}}$")
-        ax.set_ylabel(r"$\rho_{i,\mathrm{best}}$")
-        ax.set_title(diag.dataset if n > 1 else (title or f"KKT boundary — {diag.dataset}"),
-                     fontsize=10)
-        ax.grid(alpha=0.25)
-        if k == 0:
-            ax.legend(loc="lower right", fontsize=8, framealpha=0.9)
+        ax.set_xscale("log")
+        ax.set_xlim(0.93, x_max)
+        from matplotlib.ticker import FixedLocator, NullFormatter
+        from matplotlib.ticker import FuncFormatter
+        base = (1, 1.5, 2, 3, 5, 10, 20) if x_max <= 60 else (1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
+        ticks = [t for t in base if t <= x_max]
+        ax.xaxis.set_major_locator(FixedLocator(ticks))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.xaxis.set_minor_formatter(NullFormatter())
+        ax.set_ylim(-0.12 if min([diag.rho[i, best] for i in range(len(diag.member_names))]) > -0.1 else -0.3, 1.08)
+        ax.set_xlabel(r"$\sigma_i/\sigma_{\mathrm{best}}$ (log)", fontsize=8)
+        ax.set_ylabel(r"$\rho_{i,\mathrm{best}}$", fontsize=8)
+        ax.tick_params(labelsize=7)
+        ax.set_title(f"{DATASET_LABEL.get(diag.dataset, diag.dataset)}  (leader: {label_of(diag.member_names[best])})", fontsize=8.5)
+        ax.grid(alpha=0.2, which="both", lw=0.4)
 
+    # one shared legend, deduplicated
+    handles, labels = [], []
+    for row in axes:
+        for ax in row:
+            for h, l in zip(*ax.get_legend_handles_labels()):
+                if l not in labels:
+                    handles.append(h)
+                    labels.append(l)
     for k in range(n, nrows * ncols):
-        axes[k // ncols][k % ncols].axis("off")
+        ax = axes[k // ncols][k % ncols]
+        ax.axis("off")
+        ax.legend(handles, labels, loc="center", fontsize=7.5, frameon=True)
+    if n == nrows * ncols:
+        fig.legend(handles, labels, loc="lower center", ncol=min(5, len(labels)), fontsize=7.5)
+        fig.subplots_adjust(bottom=0.16)
 
-    if title and n > 1:
-        fig.suptitle(title, fontsize=12, y=1.01)
+    if title:
+        fig.suptitle(title, fontsize=9.5)
     fig.tight_layout()
     return fig
 

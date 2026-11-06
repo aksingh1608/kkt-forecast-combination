@@ -1,0 +1,13 @@
+\begin{tabular}{lrrrrr}
+\toprule
+Base learner & UCI & OPSD-H & OPSD-N & ETTh1 & ETTh2 \\
+\midrule
+SARIMA & \textbf{0} & \textbf{0} & $5.5{\times}10^{-5}$ & \textbf{0} & \textbf{0} \\
+Holt-Winters & \textbf{0} & 0.035 & \textbf{0} & \textbf{0} & \textbf{0} \\
+LightGBM & \textbf{0} & 0.011 & 0.559 & 0.652 & 1.000 \\
+CatBoost & 0.837 & 0.802 & 0.285 & 0.348 & \textbf{0} \\
+ExtraTrees & 0.163 & 0.151 & 0.156 & \textbf{0} & \textbf{0} \\
+\midrule
+mass on tree members & 1.000 & 0.965 & 1.000 & 1.000 & 1.000 \\
+\bottomrule
+\end{tabular}

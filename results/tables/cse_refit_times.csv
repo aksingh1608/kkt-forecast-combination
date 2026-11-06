@@ -1,0 +1,3 @@
+dataset,fit_time_s,skipped_refits,refit_times_s,w_sarima,w_hw,w_lgbm,w_catboost,w_extratrees
+ETTh1,61.69,sarima;hw;extratrees,lgbm=3.9;catboost=5.0,0.0,0.0,0.651589,0.348411,0.0
+ETTh2,46.48,sarima;hw;catboost;extratrees,lgbm=3.5,0.0,0.0,1.0,0.0,0.0

@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import argparse
 import pickle
+
+import numpy as np
 import shutil
 import subprocess
 import sys
@@ -55,15 +57,24 @@ def _save(fig, stem: Path) -> None:
 
 
 def build_kkt(results: Path, out_dir: Path) -> None:
+    """Recompute every diagnostic from the stored validation errors so the
+    figure always reflects the exact simplex solver and uncentred moments,
+    even for pickles written by an older release."""
+    from src.evaluation.kkt_analysis import compute_cse_diagnostics
+    from src.models.novel import solve_simplex_qp
+
     diagnostics = []
-    for f in sorted((results / "cse_diagnostics").glob("*.pkl")):
-        with f.open("rb") as fh:
-            diagnostics.append(pickle.load(fh))
-    fig = plot_kkt_boundary(
-        diagnostics,
-        title="KKT exclusion boundary (Proposition 1)",
-        annotate=True,
-    )
+    order = ["UCI", "OPSD_DE_household", "OPSD_DE_total", "ETTh1", "ETTh2"]
+    files = {f.stem: f for f in (results / "cse_diagnostics").glob("*.pkl")}
+    for ds in [d for d in order if d in files] + sorted(set(files) - set(order)):
+        with files[ds].open("rb") as fh:
+            old = pickle.load(fh)
+        E = np.asarray(old.validation_errors, dtype=float)
+        S = (E @ E.T) / E.shape[1]
+        w = solve_simplex_qp(S)
+        diagnostics.append(compute_cse_diagnostics(
+            {n: E[i] for i, n in enumerate(old.member_names)}, w, dataset=old.dataset))
+    fig = plot_kkt_boundary(diagnostics, title=None, annotate=True)
     _save(fig, out_dir / "fig2_kkt_boundary")
 
 
@@ -81,8 +92,10 @@ def build_cd(results: Path, out_dir: Path) -> None:
             [common]
         )
         ranks = pivot.rank(axis=1, ascending=True, method="average")
+        ranks = ranks.rename(columns={"FAHE (Ours)": "CSE (ours)"})
+        label = "One-step (teacher forced)" if protocol == "one_step" else "Recursive (full test window)"
         fig, _cd = plot_cd_diagram(
-            ranks, title=f"Critical difference — {protocol} (RMSE)"
+            ranks, title=f"{label}: RMSE ranks over five datasets"
         )
         # Combined fig3 uses both; also write per-protocol stems for clarity
         stem = (

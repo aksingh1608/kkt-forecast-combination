@@ -98,12 +98,40 @@ def recheck(diag_dir: Path, tol: float = 1e-6) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def update_artefacts(diag_dir: Path) -> None:
+    """Rewrite the diagnostics pickles and the weight CSV from stored errors."""
+    rows = []
+    for path in sorted(diag_dir.glob("*.pkl")):
+        with open(path, "rb") as fh:
+            old = pickle.load(fh)
+        names = list(old.member_names)
+        E = np.asarray(old.validation_errors, dtype=float)
+        S = (E @ E.T) / E.shape[1]
+        w = solve_simplex_qp(S)
+        new = compute_cse_diagnostics({n: E[i] for i, n in enumerate(names)}, w,
+                                      dataset=old.dataset, extra=dict(old.extra))
+        with open(path, "wb") as fh:
+            pickle.dump(new, fh)
+        rows.append(new.to_frame()[["dataset", "member", "weight", "sigma", "rho_vs_best",
+                                    "is_best", "kkt_residual"]])
+        print(f"rewrote {path}")
+    csv = diag_dir.parent / "cse_weights_by_dataset.csv"
+    pd.concat(rows, ignore_index=True).to_csv(csv, index=False)
+    print(f"rewrote {csv}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--in", dest="inp", default=str(ROOT / "results" / "cse_diagnostics"))
     ap.add_argument("--out", default=None, help="optional CSV path")
+    ap.add_argument("--update-artefacts", action="store_true",
+                    help="rewrite results/cse_diagnostics/*.pkl and "
+                         "results/cse_weights_by_dataset.csv with the exact weights and "
+                         "uncentred moments (test-set rows are untouched)")
     args = ap.parse_args()
 
+    if args.update_artefacts:
+        update_artefacts(Path(args.inp))
     df = recheck(Path(args.inp))
     non_lead = df[df.prop1 != "leader"]
     with pd.option_context("display.width", 200, "display.float_format", "{:.4g}".format):

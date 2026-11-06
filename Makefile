@@ -15,10 +15,10 @@ ifeq ($(wildcard $(PYTHON)),)
   PYTHON := python3
 endif
 
-.PHONY: help data features smoke benchmark rolling stats figures tables verify all
+.PHONY: help data features smoke benchmark rolling stats figures tables verify all rerun-cse recheck sensitivity folds paper paper-zip
 
 help:
-	@echo "Targets: data features smoke benchmark rolling stats figures tables verify all"
+	@echo "Targets: data features smoke benchmark rolling stats figures tables verify all recheck rerun-cse sensitivity folds paper paper-zip"
 
 data:
 	$(PYTHON) scripts/download_data.py
@@ -47,6 +47,29 @@ tables:
 
 verify:
 	$(PYTHON) scripts/verify_claims.py
+
+# --- exact simplex solver (v1.1) ------------------------------------------
+recheck:
+	$(PYTHON) scripts/recheck_simplex_kkt.py --update-artefacts --out results/tables/kkt_simplex_recheck.csv
+
+rerun-cse:
+	$(PYTHON) scripts/rerun_cse.py
+	$(PYTHON) scripts/run_significance_analysis.py --in results/
+
+sensitivity:
+	$(PYTHON) scripts/membership_sensitivity.py
+
+folds:
+	$(PYTHON) scripts/multi_fold_cse.py
+
+paper: figures
+	$(PYTHON) scripts/build_paper.py
+	cd paper && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main | tail -2
+
+paper-zip: paper
+	rm -f paper_overleaf.zip
+	zip -qr paper_overleaf.zip paper/main.tex paper/fig1_architecture.tex paper/generated paper/README.md figures/fig2_kkt_boundary.pdf figures/fig3_cd_diagrams_one_step.pdf figures/fig3_cd_diagrams_recursive.pdf
+	@echo wrote paper_overleaf.zip
 
 # End-to-end: download → feature check → full benchmark chain → derived artefacts.
 # Prefer `make verify` after a clone that already ships `results/`.

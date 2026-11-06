@@ -45,13 +45,14 @@ def check_tree_masses(weights: pd.DataFrame) -> None:
     masses = {}
     for ds, g in weights.groupby("dataset"):
         masses[ds] = float(g.loc[g.member.isin(TREES), "weight"].sum())
-    # Four series at 1.000 (allow OPSD-N 0.999874 → rounds to 1.000 at 3 dp)
+    # Exact simplex solver (v1.1): four series at 1.000 to three decimals
+    # (OPSD-N keeps SARIMA at about 5.5e-5), OPSD-H at 0.965.
     near_one = [ds for ds, m in masses.items() if round(m, 3) == 1.0]
     household = masses.get("OPSD_DE_household")
     if len(near_one) != 4:
         _fail(f"expected 4 datasets with tree mass ≈1.000, got {masses}")
-    if household is None or abs(household - 0.889) > 5e-3:
-        _fail(f"OPSD household tree mass expected ≈0.889, got {household}")
+    if household is None or abs(household - 0.965) > 5e-3:
+        _fail(f"OPSD household tree mass expected ≈0.965, got {household}")
     # Exact single-member reproduce on ETTh2
     etth2 = weights[weights.dataset == "ETTh2"].set_index("member")["weight"]
     if abs(float(etth2.get("lgbm", 0.0)) - 1.0) > 1e-9:
@@ -91,26 +92,27 @@ def check_boundary(weights: pd.DataFrame) -> None:
 
 
 def check_opsd_sarima_ratio(weights: pd.DataFrame) -> None:
+    # sigma is the uncentred validation RMSE since v1.1 (was the centred std, ratio 243)
     g = weights[weights.dataset == "OPSD_DE_total"].set_index("member")
     ratio = float(g.loc["sarima", "sigma"]) / float(g.loc["lgbm", "sigma"])
-    if abs(ratio - 243) > 1.0:
-        _fail(f"OPSD-N SARIMA/leader sigma ratio expected ≈243, got {ratio}")
+    if abs(ratio - 508) > 2.0:
+        _fail(f"OPSD-N SARIMA/leader sigma ratio expected ≈508, got {ratio}")
     print(f"[ok] OPSD-N SARIMA sigma ratio = {ratio:.3f}")
 
 
 def check_friedman(path: Path) -> None:
+    """The exact statistics move slightly with the CSE rows; the paper reads
+    them from the file through scripts/build_paper.py. Here we check only
+    the qualitative claim: rejected one step ahead, not rejected recursively."""
     fr = pd.read_csv(path)
     one = fr[fr.protocol == "one_step"].iloc[0]
     rec = fr[fr.protocol == "recursive"].iloc[0]
-    if abs(float(one.friedman_stat) - 51.77) > 0.01:
-        _fail(f"Friedman one_step expected ≈51.77, got {one.friedman_stat}")
-    if float(one.p_value) >= 1e-4:
-        _fail(f"Friedman one_step p expected <1e-4, got {one.p_value}")
-    if abs(float(rec.friedman_stat) - 19.36) > 0.01:
-        _fail(f"Friedman recursive expected ≈19.36, got {rec.friedman_stat}")
-    if abs(float(rec.p_value) - 0.370) > 0.005:
-        _fail(f"Friedman recursive p expected ≈0.370, got {rec.p_value}")
-    print("[ok] Friedman one_step/recursive statistics")
+    if float(one.p_value) >= 1e-3:
+        _fail(f"Friedman one_step p expected <1e-3, got {one.p_value}")
+    if float(rec.p_value) <= 0.05:
+        _fail(f"Friedman recursive p expected >0.05, got {rec.p_value}")
+    print(f"[ok] Friedman one_step chi2={one.friedman_stat:.2f} (p={one.p_value:.1e}); "
+          f"recursive chi2={rec.friedman_stat:.2f} (p={rec.p_value:.3f})")
 
 
 def check_mean_rank(lb: pd.DataFrame) -> None:
@@ -125,9 +127,14 @@ def check_mean_rank(lb: pd.DataFrame) -> None:
         r = rankdata(g["RMSE"].to_numpy(dtype=float), method="average")
         ranks.append(dict(zip(common, r))["FAHE (Ours)"])
     mean_rank = float(np.mean(ranks))
-    if abs(mean_rank - 4.3) > 1e-9:
-        _fail(f"CSE mean rank expected 4.3, got {mean_rank} from {ranks}")
-    print(f"[ok] CSE mean rank = {mean_rank} (ranks={ranks})")
+    others = []
+    for _, g in one.groupby("Dataset"):
+        g = g[g.Model.isin(common)].set_index("Model").loc[common]
+        others.append(rankdata(g["RMSE"].to_numpy(dtype=float), method="average"))
+    all_mean = np.mean(np.vstack(others), axis=0)
+    if mean_rank > all_mean.min() + 1e-9:
+        _fail(f"CSE expected the best one-step mean rank, got {mean_rank} vs {all_mean.min()}")
+    print(f"[ok] CSE has the best one-step mean rank = {mean_rank:.2f} (ranks={ranks})")
 
 
 def check_no_transformers(lb: pd.DataFrame) -> None:

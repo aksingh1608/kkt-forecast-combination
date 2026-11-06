@@ -21,13 +21,47 @@
   and the full KKT check. Output: `results/tables/kkt_simplex_recheck.csv`.
 - Four tests in `tests/test_kkt.py` covering the solver and the diagnostics.
 
+### Added (November 2026)
+
+- `FAHEForecaster.refit_only_active` (default True): members with zero simplex
+  weight are not refit on the full training set. The blend is identical;
+  the second fit of the excluded members is saved (`refit_times_`,
+  `skipped_refits_`).
+- `scripts/rerun_cse.py`: refits only the CSE and replaces its rows in every
+  artefact (leaderboards, predictions, diagnostics, rolling origin, refit
+  times). `python scripts/run_significance_analysis.py --in results/` then
+  rebuilds the DM and Friedman files.
+- `src/models/stacking.py` and `scripts/membership_sensitivity.py`: simplex
+  stacking over any pool of registry models; six pools per dataset.
+- `scripts/multi_fold_cse.py`: expanding-window folds for the CSE.
+- `scripts/build_paper.py`: writes every manuscript table and inline number
+  to `paper/generated/`; `paper/main.tex` contains no hand-typed numbers.
+- `scripts/recheck_simplex_kkt.py --update-artefacts`: rewrites the
+  diagnostics pickles and `cse_weights_by_dataset.csv` with the exact
+  weights and uncentred moments (no refit needed).
+- KKT boundary figure: log ratio axis, uncentred moments, colour-safe
+  markers, a separate marker for admissible members zeroed by the full
+  system.
+- `scripts/verify_claims.py` updated to the exact solver (tree mass 0.965 on
+  OPSD-H, SARIMA ratio about 508 on OPSD-N, qualitative Friedman check).
+
+### Corrected
+
+- The pairwise boundary of Proposition 1 is exact for two members only. For
+  K > 2 it is a screen that can fail in both directions (a complementary
+  member can admit a member above the boundary); the manuscript now says so
+  and the fold experiment records one such case.
+
 ### Still to regenerate
 
-The files under `results/` (leaderboards, weights, significance, rolling
-origin, figures, tables) were produced with the old solver. Run
-`make benchmark rolling stats figures tables`, then update the expected
-values in `scripts/verify_claims.py` (OPSD household tree mass moves from
-0.889 to about 0.965) and the manuscript tables.
+CSE rows for ETTh1 and ETTh2 (both protocols, rolling origin, DM, Friedman)
+and the diagnostics of all five datasets have been regenerated with the
+exact solver. The CSE test-set rows for UCI, OPSD_DE_household and
+OPSD_DE_total still come from the old solver until
+`python scripts/rerun_cse.py --datasets UCI OPSD_DE_household OPSD_DE_total`
+and `python scripts/run_significance_analysis.py --in results/` have been
+run (the raw data for those series must be downloaded first). The
+manuscript prints those entries in red until then.
 
 ## Unreleased — Phase 1 restructure (behaviour-preserving)
 

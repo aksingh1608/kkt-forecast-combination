@@ -1,0 +1,18 @@
+\begin{tabular}{llrrrrrrr}
+\toprule
+Data & Pool & $K$ & zeroed & tree mass & viol. & RMSE blend & RMSE best member & gap \\
+\midrule
+ETTh1 & paper five & 5 & 4 & 1.000 & 0 & 0.670 & 0.670 (ExtraTrees) & $+$0.0\% \\
+ETTh1 & + XGBoost, RF & 7 & 5 & 1.000 & 0 & 0.663 & 0.666 (RandomForest) & $-$0.4\% \\
+ETTh1 & + Ridge, Lasso, EN & 8 & 4 & 0.127 & 0 & 0.630 & 0.631 (Ridge) & $-$0.3\% \\
+ETTh1 & + NLinear, DLinear & 7 & 6 & 1.000 & 0 & 0.670 & 0.670 (ExtraTrees) & $+$0.0\% \\
+ETTh1 & eight tree models & 8 & 5 & 1.000 & 0 & 0.645 & 0.657 (QuantileLightGBM) & $-$1.8\% \\
+ETTh1 & all 22 & 22 & 18 & 0.157 & 0 & 0.629 & 0.631 (Ridge) & $-$0.4\% \\
+ETTh2 & paper five & 5 & 3 & 1.000 & 0 & 0.674 & 0.684 (ExtraTrees) & $-$1.5\% \\
+ETTh2 & + XGBoost, RF & 7 & 4 & 1.000 & 0 & 0.676 & 0.684 (ExtraTrees) & $-$1.2\% \\
+ETTh2 & + Ridge, Lasso, EN & 8 & 5 & 0.097 & 0 & 0.687 & 0.684 (ExtraTrees) & $+$0.5\% \\
+ETTh2 & + NLinear, DLinear & 7 & 5 & 1.000 & 0 & 0.674 & 0.684 (ExtraTrees) & $-$1.5\% \\
+ETTh2 & eight tree models & 8 & 4 & 1.000 & 0 & 0.676 & 0.684 (ExtraTrees) & $-$1.2\% \\
+ETTh2 & all 22 & 22 & 19 & 0.095 & 0 & 0.688 & 0.700 (Ridge) & $-$1.7\% \\
+\bottomrule
+\end{tabular}

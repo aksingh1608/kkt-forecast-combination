@@ -1,27 +1,154 @@
-% TikZ source for manuscript Figure 1 — CSE architecture.
-% Render: pdflatex fig1_architecture.tex  (or `make figures` matplotlib fallback)
-\documentclass[tikz,border=8pt]{standalone}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric}
-\begin{document}
+\begin{figure*}[!t]
+\centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\sffamily\small,
-  box/.style={draw, thick, align=center, rounded corners=2pt, minimum height=1.1cm, minimum width=2.4cm},
-  arrow/.style={-{Latex}, thick}
+  font=\sffamily\scriptsize,
+  >={Latex[length=1.7mm,width=1.2mm]},
+  lay/.style   ={draw=black!25,fill=black!4,rounded corners=2.5pt,line width=0.4pt},
+  tab/.style   ={draw=black!25,fill=black!12,rounded corners=2.5pt,line width=0.4pt},
+  chip/.style  ={draw=black!45,fill=white,rounded corners=1.5pt,line width=0.45pt,
+                 align=center,inner sep=2pt,minimum height=0.46cm},
+  acc/.style   ={draw=accent,fill=accent!10,rounded corners=1.5pt,line width=0.8pt,
+                 align=center,inner sep=2pt,minimum height=0.46cm},
+  accd/.style  ={draw=accent,fill=accent!5,rounded corners=2.5pt,line width=0.6pt,dashed},
+  stg/.style   ={draw=black!45,fill=white,rounded corners=2pt,line width=0.5pt,
+                 align=center,inner sep=3pt,text width=2.05cm,minimum height=1.20cm},
+  astg/.style  ={stg,draw=accent,fill=accent!8,line width=0.8pt},
+  thstg/.style ={draw=accent,fill=white,rounded corners=2pt,line width=0.5pt,dashed,
+                 align=center,inner sep=3pt,text width=2.65cm,minimum height=1.05cm},
+  num/.style   ={circle,fill=black!65,text=white,inner sep=0.9pt,
+                 font=\sffamily\fontsize{5.5}{6}\selectfont\bfseries},
+  anum/.style  ={num,fill=accent},
+  lab/.style   ={font=\sffamily\fontsize{6.6}{7.6}\selectfont\itshape,inner sep=1.2pt,fill=white},
+  ttl/.style   ={font=\sffamily\footnotesize\bfseries},
+  lyr/.style   ={font=\sffamily\fontsize{6.5}{7.5}\selectfont\bfseries},
+  note/.style  ={font=\sffamily\fontsize{6.6}{7.6}\selectfont,text=black!60},
+  ar/.style    ={->,line width=0.55pt,black!70},
+  aar/.style   ={->,line width=0.8pt,accent},
 ]
-\node[box] (feat) {Causal features\\(57 columns)};
-\node[box, right=1.1cm of feat] (class) {Classical\\SARIMA, Holt--Winters};
-\node[box, below=0.55cm of class] (tree) {Trees\\LightGBM, CatBoost, ET};
-\node[box, right=1.2cm of class] (nnls) {NNLS on validation\\simplex $w\ge 0,\sum w=1$};
-\node[box, right=1.1cm of nnls] (cse) {CSE forecast\\(unit recursion)};
-\node[draw, thick, dashed, align=center, below=1.15cm of nnls, minimum width=7.2cm]
-  (kkt) {KKT exclusion: $\rho_i \ge \sigma_{\mathrm{best}}/\sigma_i \Rightarrow w_i=0$};
 
-\draw[arrow] (feat) -- (class);
-\draw[arrow] (feat) |- (tree);
-\draw[arrow] (class) -- (nnls);
-\draw[arrow] (tree) -| (nnls);
-\draw[arrow] (nnls) -- (cse);
-\draw[arrow] (nnls) -- (kkt);
-\end{tikzpicture}
-\end{document}
+%% =================================================================
+%%  PANEL (a)   layered architecture
+%% =================================================================
+\node[ttl,anchor=west] at (0,1.05) {(a) Benchmark architecture};
+
+\def\bandL{0.85} \def\bandR{5.90}
+\newcommand{\band}[3]{%
+  \draw[lay] (\bandL,#1+#2) rectangle (\bandR,#1-#2);
+  \draw[tab] (0,#1+#2) rectangle (0.75,#1-#2);
+  \node[lyr,rotate=90] at (0.375,#1) {#3};
+}
+
+\band{0}{0.55}{DATA}
+\band{-1.85}{0.55}{REPRESENTATION}
+\band{-3.80}{0.68}{LEARNING}
+\band{-5.90}{0.55}{PROTOCOL}
+\band{-7.85}{0.62}{EVIDENCE}
+
+% --- data
+\foreach \x/\t in {1.35/UCI, 2.34/OPSD-H, 3.33/OPSD-N, 4.32/ETTh1, 5.31/ETTh2}
+  {\node[chip,text width=0.80cm,minimum height=0.40cm,inner sep=1pt,
+         font=\sffamily\fontsize{6.2}{7}\selectfont] at (\x,0.16) {\t};}
+\node[note] at (3.375,-0.34) {5 hourly series, 3 countries, 4 aggregation levels};
+
+% --- representation
+\node[chip,text width=1.35cm] at (1.75,-1.72)  {57 causal\\ features};
+\node[chip,text width=1.35cm] at (3.375,-1.72) {chronological\\ 80/20 split};
+\node[chip,text width=1.35cm] at (5.00,-1.72)  {validation\\ tail};
+\node[note] at (3.375,-2.24) {no future information enters training};
+
+% --- learning
+\node[chip,text width=2.10cm,minimum height=0.62cm] at (2.10,-3.68)
+     {up to 23 forecasters\\ six model families};
+\node[acc,text width=2.10cm,minimum height=0.62cm] at (4.65,-3.68)
+     {\textbf{CSE core}\\ $K=5$ members};
+\node[note,align=center] at (3.375,-4.26)
+     {members refitted on the full training partition\\
+      ranks use the 19 models common to all series};
+
+% --- protocol
+\node[chip,text width=2.10cm] at (2.10,-5.78) {A: one step\\ teacher forced};
+\node[chip,text width=2.10cm] at (4.65,-5.78) {B: recursive, full\\ window and 24 origins};
+\node[note] at (3.375,-6.28) {identical models, identical split, two regimes};
+
+% --- evidence
+\node[chip,text width=1.35cm] at (1.75,-7.70)  {six error\\ metrics};
+\node[chip,text width=1.35cm] at (3.375,-7.70) {DM, Holm,\\ $d$ and $\delta$};
+\node[chip,text width=1.35cm] at (5.00,-7.70)  {Friedman,\\ Nemenyi};
+\node[note] at (3.375,-8.22) {leaderboards, horizon tables, CD diagrams};
+
+% --- vertical flow
+\draw[ar] (3.375,-0.55) -- node[lab,right]{$y_t$} (3.375,-1.30);
+\draw[ar] (3.375,-2.40) -- node[lab,right]{$x_t\in\mathbb{R}^{57}$} (3.375,-3.12);
+\draw[ar] (3.375,-4.48) -- node[lab,right]{fitted models} (3.375,-5.35);
+\draw[ar] (3.375,-6.45) -- node[lab,right]{$\hat y$ on test} (3.375,-7.23);
+
+% --- cross-cutting theory column
+\draw[accd] (6.10,-3.12) rectangle (6.95,-8.47);
+\node[lyr,rotate=90,text=accent] at (6.525,-5.80) {KKT ANALYSIS (SEC.~\ref{sec:theory})};
+\draw[aar] (5.90,-3.68) -- node[lab,above,pos=0.42]{$\Sigma$} (6.10,-3.68);
+\draw[aar] (6.10,-7.85) -- (5.90,-7.85);
+
+%% =================================================================
+%%  PANEL (b)   the core, opened
+%% =================================================================
+\draw[accd,line width=0.5pt] (7.55,0.72) rectangle (18.25,-8.75);
+\node[ttl,anchor=west] at (7.60,1.05) {(b) Convex stacking core and its KKT analysis};
+\draw[accd,line width=0.5pt] (5.72,-4.00) -- (7.55,-2.20);
+
+% --- estimation row
+\node[stg]  (s1) at (8.85,-1.15)  {fit $K=5$ members\\ on train minus\\ the validation\\ slice};
+\node[stg]  (s2) at (11.45,-1.15) {validation errors\\ $e_i$, uncentred\\ moments\\ $\Sigma_{ij}=e_i^{\top}e_j/n$};
+\node[astg] (s3) at (14.05,-1.15) {exact QP on the\\ simplex\\[1pt] $\min\limits_{w\in\Delta^{K-1}} w^{\top}\Sigma w$};
+\node[astg] (s4) at (16.65,-1.15) {refit active\\ members, blend\\[1pt] $\hat y=\sum_i w_i\hat y_i$};
+
+\node[num]  at (s1.north west) {1};
+\node[num]  at (s2.north west) {2};
+\node[anum] at (s3.north west) {3};
+\node[anum] at (s4.north west) {4};
+
+\draw[ar] (s1) -- node[lab,above]{$\hat y_i$} (s2);
+\draw[ar] (s2) -- node[lab,above]{$\Sigma$} (s3);
+\draw[ar] (s3) -- node[lab,above]{$w$} (s4);
+
+\node[note,align=center] at (8.85,-2.25)
+  {SARIMA, Holt-Winters,\\ LightGBM, CatBoost,\\ Extra-Trees};
+
+% --- simplex glyph
+\draw[accd,fill=white] (12.50,-2.55) rectangle (17.45,-3.95);
+\coordinate (A) at (13.00,-3.70);
+\coordinate (B) at (14.30,-3.70);
+\coordinate (C) at (13.65,-2.80);
+\draw[fill=accent!10,draw=accent,line width=0.5pt] (A) -- (B) -- (C) -- cycle;
+\node[circle,draw=black!55,fill=white,inner sep=0.9pt] (u) at (13.65,-3.32) {};
+\fill[accent] (B) circle (1.6pt);
+\draw[aar] (u) -- ++(0.45,-0.26);
+\node[note,anchor=west,align=left,text=black!70] at (14.58,-3.25)
+  {$\Delta^{K-1}$: the optimum\\ leaves the interior and sits\\ on a vertex or a face, so\\ members take zero weight};
+
+% --- theory row
+\node[thstg] (t1) at (9.20,-5.15)  {\textbf{KKT conditions}\\ $(\Sigma w)_i\ge\lambda$, equality\\ whenever $w_i>0$};
+\node[thstg] (t2) at (12.40,-5.15) {\textbf{exclusion boundary}\\ $\rho_i\ge\sigma_{\mathrm{best}}/\sigma_i$\\ (Proposition~\ref{prop:boundary})};
+\node[thstg] (t3) at (15.60,-5.15) {\textbf{predicted zero set}\\ read off validation\\ geometry; skip their refit};
+
+\draw[aar] (t1) -- node[lab,above]{$\lambda$} (t2);
+\draw[aar] (t2) -- (t3);
+\draw[aar] (s2.south) -- ++(0,-1.05) -| node[lab,pos=0.30,above]{$\Sigma$} (t1.north);
+
+% --- verdict bar
+\node[acc,text width=9.75cm,minimum height=0.90cm] (v) at (12.90,-7.20)
+  {\textbf{no member above the boundary ever received weight, on any of the \nNonLeading{} non-leading pairs}\\
+   exact agreement in \nAgree{} of \nNonLeading; \nAdmZero{} admissible members are zeroed by collinearity under the full KKT
+   system \eqref{eq:kkt}; \nAdmPositive{} of \nAdmissible{} admissible members receive positive weight (Table~\ref{tab:agree}, Fig.~\ref{fig:boundary})};
+
+\draw[aar] (t3.south) -- (t3.south |- v.north);
+\draw[ar] (s4.south) -- (16.65,-1.90) -- (17.72,-1.90) -- (17.72,-6.75);
+\node[lab,rotate=90] at (17.72,-4.00) {learned $w$};
+
+\node[note,anchor=north] at (12.90,-7.85)
+  {tree mass rounds to 1.000 on \nMassOne{} datasets and to \massOPSDDEhousehold{} on the fifth};
+
+\end{tikzpicture}}
+\caption{Architecture of the benchmark. (a) The five layers of the study. One causal feature pipeline builds 57 strictly causal columns, a single chronological split gives 80\% training and 20\% test, and a validation tail is carved from the training partition, so no future information reaches any fit. Up to 23 forecasters in six families and the convex stacking ensemble (CSE) are scored under both protocols with the same six metrics and the same significance suite; rank statistics use the \nCommonOne{} models present on all five series. The dashed column marks the KKT analysis of Section~\ref{sec:theory}, which reads the same validation geometry as the ensemble and feeds the evidence layer without touching the test set. (b) The core, opened. Steps 1 to 4 estimate the blend, and the dashed row derives the predicted zero set from $\Sigma$ alone through the stationarity conditions \eqref{eq:kkt} and the exclusion boundary \eqref{eq:boundary}. The two paths meet at the bottom bar: the pairwise screen is not violated on these series, since no member above it received weight, while \nAdmZero{} admissible members are still zeroed by collinearity under the full system \eqref{eq:kkt}, so agreement is exact in \nAgree{} of \nNonLeading{} pairs. Members in the zero set are not refit, which is where the analysis saves training time. The glyph shows why zeros appear at all: on the simplex the optimum leaves the interior and settles on a vertex or a face, so members receive exactly zero weight.}
+\label{fig:arch}
+\end{figure*}

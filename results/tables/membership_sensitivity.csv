@@ -1,0 +1,13 @@
+dataset,pool,K,failed,n_zero,n_active,max_weight,argmax,tree_mass,val_leader,excluded_by_boundary,necessity_violations,admissible_positive,admissible_zeroed,test_rmse_blend,test_rmse_best_active_member,best_active_member,fit_time_s
+ETTh1,paper5,5,,4,1,1.0,ExtraTrees,1.0,ExtraTrees,4,0,0,0,0.6697,0.6697,ExtraTrees,80.8
+ETTh1,paper5+xgb_rf,7,,5,2,0.7349,RandomForest,1.0,RandomForest,5,0,1,0,0.6634,0.6661,RandomForest,161.6
+ETTh1,paper5+linear,8,,4,4,0.8727,Ridge,0.1273,Lasso,1,0,4,2,0.6296,0.6313,Ridge,94.6
+ETTh1,paper5+lite_dl,7,,6,1,1.0,ExtraTrees,1.0,ExtraTrees,6,0,0,0,0.6697,0.6697,ExtraTrees,78.8
+ETTh1,trees8,8,,5,3,0.5323,QuantileLightGBM,1.0,QuantileLightGBM,3,0,2,2,0.6451,0.6566,QuantileLightGBM,185.4
+ETTh1,all,22,,18,4,0.8426,Ridge,0.1574,Lasso,1,0,4,16,0.629,0.6313,Ridge,211.0
+ETTh2,paper5,5,,3,2,0.8205,ExtraTrees,1.0,ExtraTrees,3,0,1,0,0.6739,0.6843,ExtraTrees,72.1
+ETTh2,paper5+xgb_rf,7,,4,3,0.6504,ExtraTrees,1.0,ExtraTrees,4,0,2,0,0.6764,0.6843,ExtraTrees,141.0
+ETTh2,paper5+linear,8,,5,3,0.9033,Ridge,0.0967,Ridge,4,0,2,1,0.6874,0.6843,ExtraTrees,80.8
+ETTh2,paper5+lite_dl,7,,5,2,0.8205,ExtraTrees,1.0,ExtraTrees,5,0,1,0,0.6739,0.6843,ExtraTrees,73.3
+ETTh2,trees8,8,,4,4,0.6044,ExtraTrees,1.0,ExtraTrees,3,0,3,1,0.6759,0.6843,ExtraTrees,180.0
+ETTh2,all,22,,19,3,0.905,Ridge,0.095,Ridge,12,0,2,7,0.6882,0.7001,Ridge,148.5

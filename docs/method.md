@@ -68,16 +68,27 @@ $$
 $$
 
 Points **above** the curve $\rho = \sigma_{\mathrm{best}}/\sigma_i$ in the
-$(\sigma_i/\sigma_{\mathrm{best}},\,\rho)$ plane are excluded. The figure
+$(\sigma_i/\sigma_{\mathrm{best}},\,\rho)$ plane are predicted to be
+excluded. Since v1.1 the moments are **uncentred** ($\sigma_i$ is the
+validation RMSE), which is the matrix in the objective, and the weights are
+the exact minimiser on the simplex (`solve_simplex_qp`). The figure
 `figures/fig2_kkt_boundary.pdf` plots every non-leading member on every
-dataset against that curve. Across 20 non-leading pairs there is no
-counterexample to the boundary; agreement with the NNLS zeros is exact in
-17/20 cases. Three admissible members are zeroed by collinearity under the
-full KKT system; of 11 admissible members, 8 receive positive weight.
+dataset against that curve. Across the 20 non-leading pairs of the main
+benchmark no member above the curve received weight; agreement with the
+simplex zeros is exact in 17/20 cases. Three admissible members are zeroed
+by collinearity under the full KKT system; of 11 admissible members, 8
+receive positive weight. The full KKT residuals $(\Sigma w)_i - \lambda$
+are checked for all 25 members (`scripts/recheck_simplex_kkt.py`).
 
-An instructive exception is OPSD national load: SARIMA has enormous
-$\sigma$ ($\approx 243\times$ the leader) but near-orthogonal errors, so
-the boundary admits a tiny positive weight.
+The pairwise rule is exact for two members only. For $K > 2$ it is a
+screen: a third member can cancel part of a member's error and admit it
+although it lies above the curve (one such case appears in
+`results/tables/cse_folds.csv`), and an admitted member can zero a member
+that lies below it. The exact statement is the KKT system itself.
+
+An instructive exception is OPSD national load: SARIMA has an enormous
+validation RMSE ($\approx 508\times$ the leader) but near-orthogonal
+errors, so the simplex solution admits a weight of about $5.5\times10^{-5}$.
 
 ## Protocols and statistics
 

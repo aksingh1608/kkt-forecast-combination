@@ -171,6 +171,15 @@ class FAHEForecaster(ForecastModel):
     # features and let NNLS pick weights across the full pool. Empirically
     # this lifts FAHE above plain CatBoost on energy benchmarks.
     use_extended_pool: bool = True
+    # When True, the second (full-training) fit is run only for members whose
+    # simplex weight is positive. A zero-weight member contributes nothing to
+    # the blend, so the forecasts are identical and the refit time is saved.
+    # This is the "screen before you refit" use of the KKT analysis.
+    refit_only_active: bool = True
+    # Members with weight below this value are treated as zero.
+    active_tol: float = 1e-9
+    refit_times_: dict[str, float] = field(default_factory=dict, init=False)
+    skipped_refits_: list[str] = field(default_factory=list, init=False)
 
     # --- learned state ------------------------------------------------------
     weights_: dict[str, float] = field(default_factory=dict, init=False)
@@ -253,14 +262,39 @@ class FAHEForecaster(ForecastModel):
             for m in model_names
         }
 
-        # 4. REFIT each base model on the FULL training set so the test
-        #    forecast uses every available observation. -------------------
-        self._refit_sarima(y_train)
-        self._refit_hw(y_train)
-        self._refit_lgbm(X_train, y_train)
+        # 4. REFIT base models on the FULL training set so the test forecast
+        #    uses every available observation. With ``refit_only_active`` the
+        #    members the simplex solve zeroed are skipped: their weight is
+        #    exactly zero, so the blend is unchanged and their fit time is
+        #    saved. ----------------------------------------------------------
+        import time as _time
+
+        def _active(name: str) -> bool:
+            if not self.refit_only_active:
+                return True
+            return self.weights_.get(name, 0.0) > self.active_tol
+
+        self.refit_times_ = {}
+        self.skipped_refits_ = []
+        refits = [
+            ("sarima", lambda: self._refit_sarima(y_train)),
+            ("hw", lambda: self._refit_hw(y_train)),
+            ("lgbm", lambda: self._refit_lgbm(X_train, y_train)),
+        ]
         if self.use_extended_pool:
-            self._refit_catboost(X_train, y_train)
-            self._refit_extratrees(X_train, y_train)
+            refits += [
+                ("catboost", lambda: self._refit_catboost(X_train, y_train)),
+                ("extratrees", lambda: self._refit_extratrees(X_train, y_train)),
+            ]
+        for name, fn in refits:
+            if name in model_names and not _active(name):
+                self.skipped_refits_.append(name)
+                continue
+            t0 = _time.perf_counter()
+            fn()
+            self.refit_times_[name] = _time.perf_counter() - t0
+        if self.skipped_refits_:
+            logger.info("CSE skipped refit of zero-weight members: %s", self.skipped_refits_)
 
         self.fitted_ = True
         return self

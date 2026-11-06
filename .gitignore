@@ -43,3 +43,13 @@ build/
 # Internal audit notes (keep on disk, never publish)
 AUDIT.md
 PREPUSH_AUDIT.md
+
+# LaTeX build files
+paper/*.aux
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.pdf
+paper/b*.log
