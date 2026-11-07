@@ -4,13 +4,13 @@ Data & Protocol & Best model & RMSE (best) & RMSE (CSE) & DM stat & $p_{\mathrm{
 \midrule
 UCI & one-step & ExtraTrees & 0.632 & 0.638 & $-$1.42 & 0.467 & $-$0.016 / $+$0.001 & tie & 17 / 22 & 5 \\
 UCI & recursive & SARIMA & 0.889 & 1.100 & $-$10.74 & $< 10^{-4}$ & $-$0.354 / $-$0.206 & CSE worse & 21 / 22 & 1 \\
-OPSD-H & one-step & QuantileLightGBM & 0.156 & 0.159 & $-$1.87 & 0.061 & $-$0.285 / $-$0.197 & tie & 21 / 22 & 1 \\
-OPSD-H & recursive & NaiveDrift & 0.175 & 0.794 & $-$14.09 & $< 10^{-4}$ & $-$0.734 / $-$0.826 & CSE worse & 22 / 22 & 0 \\
+OPSD-H & one-step & Ridge & 0.147 & 0.155 & $-$11.16 & $< 10^{-4}$ & $-$0.278 / $-$0.116 & CSE worse & 22 / 22 & 0 \\
+OPSD-H & recursive & Holt-Winters & 0.168 & 0.498 & $-$87.93 & $< 10^{-4}$ & $-$1.312 / $-$0.850 & CSE worse & 22 / 22 & 0 \\
 OPSD-N & one-step & \textbf{CSE (ours)} & -- & -- & -- & -- & -- & CSE is best & 18 / 18 & 0 \\
 OPSD-N & recursive & XGBoost & 3\,756 & 4\,301 & $-$27.06 & $< 10^{-4}$ & $-$0.440 / $-$0.092 & CSE worse & 18 / 18 & 0 \\
 ETTh1 & one-step & Ridge & 0.631 & 0.672 & $-$6.45 & $< 10^{-4}$ & $-$0.130 / $-$0.052 & CSE worse & 20 / 22 & 2 \\
 ETTh1 & recursive & RandomForest & 2.880 & 3.529 & $-$12.62 & $< 10^{-4}$ & $-$0.213 / $-$0.129 & CSE worse & 22 / 22 & 0 \\
 ETTh2 & one-step & ExtraTrees & 0.684 & 0.704 & $-$2.48 & 0.066 & $-$0.050 / $-$0.020 & tie & 17 / 22 & 5 \\
-ETTh2 & recursive & \textbf{CSE (ours)} & -- & -- & -- & -- & -- & CSE is best & 21 / 22 & 1 \\
+ETTh2 & recursive & LightGBM & 6.735 & 6.735 & $+$0.00 & 1.000 & -- / $+$0.000 & identical & 21 / 22 & 1 \\
 \bottomrule
 \end{tabular}

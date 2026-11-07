@@ -2,5 +2,5 @@ dataset,fit_time_s,skipped_refits,refit_times_s,w_sarima,w_hw,w_lgbm,w_catboost,
 ETTh1,61.69,sarima;hw;extratrees,lgbm=3.9;catboost=5.0,0.0,0.0,0.651589,0.348411,0.0
 ETTh2,46.48,sarima;hw;catboost;extratrees,lgbm=3.5,0.0,0.0,1.0,0.0,0.0
 UCI,36.05,sarima;hw;lgbm,catboost=2.4;extratrees=0.4,0.0,0.0,0.0,0.83745,0.16255
-OPSD_DE_household,261.01,sarima,hw=6.3;lgbm=2.3;catboost=3.5;extratrees=1.6,0.0,0.035391,0.011105,0.802399,0.151105
 OPSD_DE_total,496.09,hw,sarima=266.2;lgbm=2.5;catboost=4.1;extratrees=2.4,5.5e-05,0.0,0.559241,0.28481,0.155895
+OPSD_DE_household,71.22,sarima;hw,lgbm=1.7;catboost=3.5;extratrees=1.5,0.0,0.0,0.340287,0.172708,0.487005

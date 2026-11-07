@@ -1,10 +1,10 @@
 {
   "dataset": "OPSD_DE_household",
   "model": "NLinear",
-  "best_value": 0.3639977309254173,
+  "best_value": 0.36071731656459544,
   "best_params": {
-    "lookback": 48,
-    "clip_quantile": 0.995,
-    "ridge": 0.00010045891926029178
+    "lookback": 24,
+    "clip_quantile": 0.99,
+    "ridge": 0.00010039361320443204
   }
 }
