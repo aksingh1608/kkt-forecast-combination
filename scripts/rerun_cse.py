@@ -225,10 +225,11 @@ def main() -> None:
     args = parse_args()
     datasets = args.datasets or list(config.PROJECT_DATASETS)
     summary = []
+    out = args.results / "tables" / "cse_refit_times.csv"
     for ds in datasets:
         summary.append(run_dataset(ds, args))
-    out = args.results / "tables" / "cse_refit_times.csv"
-    _replace_rows(out, pd.DataFrame(summary), ["dataset"])
+        # write after every dataset so a later failure does not lose it
+        _replace_rows(out, pd.DataFrame([summary[-1]]), ["dataset"])
     print(pd.DataFrame(summary).to_string(index=False))
     print("\nNext: python scripts/run_significance_analysis.py --in", args.results)
 

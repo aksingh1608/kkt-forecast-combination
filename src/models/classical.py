@@ -95,7 +95,8 @@ class ARIMAForecaster(ForecastModel):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             model = ARIMA(y_train.astype(float), order=self.order)
-            self.results_ = model.fit(method_kwargs={"warn_convergence": False})
+            self.results_ = model.fit(method_kwargs={"warn_convergence": False},
+                                      low_memory=True)
         self.fitted_ = True
         return self
 
@@ -126,7 +127,10 @@ class SARIMAForecaster(ForecastModel):
                 enforce_stationarity=False,
                 enforce_invertibility=False,
             )
-            self.results_ = model.fit(disp=False, maxiter=100)
+            # low_memory=True: identical parameters and forecasts, a small
+            # fraction of the memory (the full Kalman output for a seasonal
+            # model on tens of thousands of hours runs to several GB).
+            self.results_ = model.fit(disp=False, maxiter=100, low_memory=True)
         self.fitted_ = True
         return self
 

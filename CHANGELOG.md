@@ -45,6 +45,17 @@
 - `scripts/verify_claims.py` updated to the exact solver (tree mass 0.965 on
   OPSD-H, SARIMA ratio about 508 on OPSD-N, qualitative Friedman check).
 
+### Fixed (7 November 2026)
+
+- SARIMA and ARIMA fits (in the CSE and as standalone models) now use
+  statsmodels `low_memory=True`. Parameters and forecasts are bit-for-bit
+  identical (checked on ETTh1 and ETTh2), but peak memory for one seasonal
+  fit on 12k hourly points drops from about 3.9 GB to 0.2 GB. Without it the
+  CSE refit on the two OPSD series was killed by the out-of-memory killer on
+  a laptop.
+- `scripts/rerun_cse.py` writes `results/tables/cse_refit_times.csv` after
+  every dataset, so a crash does not lose the datasets already finished.
+
 ### Corrected
 
 - The pairwise boundary of Proposition 1 is exact for two members only. For
