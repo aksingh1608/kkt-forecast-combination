@@ -26,19 +26,23 @@ $y^{\mathrm{val}}$ be the held-out targets.
 
 ## Convex stacking
 
-Weights solve a non-negative least-squares problem on the validation slice,
-then are normalised onto the probability simplex:
+Weights are the exact solution of the least-squares problem on the
+probability simplex, on the validation slice:
 
 $$
-\min_{w \ge 0}\ \|Pw - y^{\mathrm{val}}\|_2^2
-\quad\text{then}\quad
-w \leftarrow w / \mathbf{1}^\top w,
+\min_{w\in\Delta^{K-1}}\ \|Pw - y^{\mathrm{val}}\|_2^2,
 \qquad
-w\in\Delta^{K-1}.
+\Delta^{K-1}=\{w\ge 0,\ \mathbf{1}^\top w = 1\}.
 $$
 
-Members are then **refitted on the full training partition** before test
-forecasts. Under the recursive protocol the ensemble rolls out as a unit:
+The solver (`solve_simplex_qp`) enumerates the faces of the simplex, which is
+cheap for $K=5$. Until v1.1 the code ran non-negative least squares without
+the sum constraint and divided by the sum afterwards, which is a different
+problem whenever the raw weights do not sum to one (see `CHANGELOG.md`).
+
+Members with positive weight are then **refit on the full training
+partition** before test forecasts. Members with zero weight are not refit,
+because they contribute nothing to the blend. Under the recursive protocol the ensemble rolls out as a unit:
 tree members consume lag/rolling features rebuilt from the ensemble’s own
 past predictions (not teacher-forced true lags).
 
@@ -49,16 +53,17 @@ Implementation: `src/models/novel.py` (`FAHEForecaster` / `CSEForecaster`).
 On these series the validation errors of classical members are typically
 both larger in scale and highly correlated with the best tree member. The
 simplex optimum then puts nearly all mass on tree learners. Empirically,
-tree mass is $1.000$ on four datasets and $0.889$ on OPSD household
+tree mass rounds to $1.000$ on all five datasets
 (`results/cse_weights_by_dataset.csv`). On ETTh2 the blend is exactly
 LightGBM ($w=1$).
 
 ## KKT exclusion boundary
 
-Write validation errors $e_i = y^{\mathrm{val}} - \hat y_i^{\mathrm{val}}$,
-$\sigma_i = \mathrm{std}(e_i)$, and $\rho_{ij}=\mathrm{corr}(e_i,e_j)$.
-For the simplex problem $\min_{w\in\Delta} w^\top \Sigma w$ with
-$\Sigma_{ij}=\langle e_i,e_j\rangle / n$, the KKT conditions imply a
+Write validation errors $e_i = y^{\mathrm{val}} - \hat y_i^{\mathrm{val}}$.
+For the simplex problem $\min_{w\in\Delta} w^\top \Sigma w$ with the
+uncentred second moments $\Sigma_{ij}=\langle e_i,e_j\rangle / n$, let
+$\sigma_i=\sqrt{\Sigma_{ii}}$ (the validation RMSE) and
+$\rho_{ij}=\Sigma_{ij}/(\sigma_i\sigma_j)$. The KKT conditions imply a
 two-member exclusion rule (Proposition 1 in the paper). Relative to the
 best member (lowest $\sigma$), a weaker member $i$ receives **exactly
 zero weight** when its error correlation with the leader is high enough:
@@ -69,14 +74,13 @@ $$
 
 Points **above** the curve $\rho = \sigma_{\mathrm{best}}/\sigma_i$ in the
 $(\sigma_i/\sigma_{\mathrm{best}},\,\rho)$ plane are predicted to be
-excluded. Since v1.1 the moments are **uncentred** ($\sigma_i$ is the
-validation RMSE), which is the matrix in the objective, and the weights are
-the exact minimiser on the simplex (`solve_simplex_qp`). The figure
+excluded. The moments are uncentred because that is the matrix in the
+objective. The figure
 `figures/fig2_kkt_boundary.pdf` plots every non-leading member on every
 dataset against that curve. Across the 20 non-leading pairs of the main
 benchmark no member above the curve received weight; agreement with the
-simplex zeros is exact in 17/20 cases. Three admissible members are zeroed
-by collinearity under the full KKT system; of 11 admissible members, 8
+simplex zeros is exact in 18/20 cases. Two admissible members are zeroed
+by collinearity under the full KKT system; of 9 admissible members, 7
 receive positive weight. The full KKT residuals $(\Sigma w)_i - \lambda$
 are checked for all 25 members (`scripts/recheck_simplex_kkt.py`).
 

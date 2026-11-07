@@ -1,6 +1,27 @@
 # Changelog
 
-## Unreleased: exact simplex solver and uncentred KKT diagnostics
+## v1.2.0 (7 November 2026)
+
+Exact simplex solver and uncentred KKT diagnostics (v1.1), corrected OPSD
+household target (v1.2), and a clean-up of the repository.
+
+### Removed
+
+- `scripts/build_tables.py` and `results/tables/table_*`: the paper reads
+  `paper/generated/`, written by `scripts/build_paper.py`.
+- `scripts/run_multistep_benchmark.py` and `results/multistep/`: the paper uses
+  `results/multistep_rolling/` only.
+- `scripts/rerun_cse_recursive.py` (replaced by `scripts/rerun_cse.py`) and
+  `scripts/create_paper_pack.py`.
+- `figures/fig4_error_drift_*` and `results/figures/error_drift__*`, which
+  predated the solver and OPSD household fixes. The paper's drift figure is
+  `figures/fig5_error_drift_uci.pdf`.
+- `RELEASE_NOTES_v1.0.0.md` and `docs/RELEASE.md`.
+
+### Dependencies
+
+- `requirements.txt` now holds only the CPU packages needed to reproduce
+  `results/` and run the tests. The other pins moved to `requirements-gpu.txt`.
 
 ### Changed (affects reported numbers)
 
@@ -42,8 +63,8 @@
 - KKT boundary figure: log ratio axis, uncentred moments, colour-safe
   markers, a separate marker for admissible members zeroed by the full
   system.
-- `scripts/verify_claims.py` updated to the exact solver (tree mass 0.965 on
-  OPSD-H, SARIMA ratio about 508 on OPSD-N, qualitative Friedman check).
+- `scripts/verify_claims.py` updated to the exact solver (SARIMA ratio about
+  508 on OPSD-N, qualitative Friedman check).
 
 ### Results regenerated (v1.2, 7 November 2026)
 
@@ -62,8 +83,8 @@ from `paper/generated/`.
 - `src/data/extra_loaders.py`: the OPSD-H target averaged the households'
   cumulative meters and then differenced the average. When a household
   started or stopped reporting, the average jumped and produced a fake spike
-  (137 kWh in one hour on 1 Feb 2017); a 201 kWh jump in one meter on
-  8 Jul 2017 was also kept. Each meter is now differenced first, negative
+  (137 kWh in one hour on 1 Feb 2017); an 804 kWh jump in one meter on
+  8 Jul 2017 (201 kWh in the average) was also kept. Each meter is now differenced first, negative
   steps and steps above 43.5 kWh/h are set to missing, and the reporting
   households are averaged (`opsd_household_series`). Tests in
   `tests/test_opsd_household.py`.
@@ -95,18 +116,7 @@ from `paper/generated/`.
   member can admit a member above the boundary); the manuscript now says so
   and the fold experiment records one such case.
 
-### Still to regenerate
-
-CSE rows for ETTh1 and ETTh2 (both protocols, rolling origin, DM, Friedman)
-and the diagnostics of all five datasets have been regenerated with the
-exact solver. The CSE test-set rows for UCI, OPSD_DE_household and
-OPSD_DE_total still come from the old solver until
-`python scripts/rerun_cse.py --datasets UCI OPSD_DE_household OPSD_DE_total`
-and `python scripts/run_significance_analysis.py --in results/` have been
-run (the raw data for those series must be downloaded first). The
-manuscript prints those entries in red until then.
-
-## Unreleased — Phase 1 restructure (behaviour-preserving)
+## v1.0.0: restructure (behaviour-preserving)
 
 ### Layout
 
@@ -152,7 +162,7 @@ manuscript prints those entries in red until then.
   `from src.cse import CSEForecaster`; `FAHEForecaster` remains a deprecated alias.
 
 
-## Unreleased — Phases 2–7 (public release packaging)
+## v1.0.0: public release packaging
 
 ### Added
 - `Makefile`, `scripts/download_data.py`, `scripts/verify_claims.py`,

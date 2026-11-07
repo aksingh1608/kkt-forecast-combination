@@ -75,7 +75,7 @@ SHA-256 digests below are of the exact files used to produce `results/`.
 | Rows (after loader) | 35 461 |
 | Date range | 2015-04-15 → 2019-05-01 |
 | Target | `DE_household_consumption`: mean hourly grid import of the households reporting in each hour (`src/data/extra_loaders.py`) |
-| Cleaning | Each household's cumulative `grid_import` meter is differenced on its own, then averaged across the households that report in that hour. Negative steps (meter resets) and steps above 43.5 kWh in one hour (3 x 230 V x 63 A, the limit of a standard household connection) are set to missing. The removed readings are listed in `results/tables/OPSD_DE_household_removed_readings.csv`. Until v1.2 the loader averaged the cumulative readings first and differenced the average, which turned a household joining or leaving into a spike (one of 137 kWh on 1 Feb 2017) and kept a 201 kWh meter jump on 8 Jul 2017. |
+| Cleaning | Each household's cumulative `grid_import` meter is differenced on its own, then averaged across the households that report in that hour. Negative steps (meter resets) and steps above 43.5 kWh in one hour (3 x 230 V x 63 A, the limit of a standard household connection) are set to missing. The removed readings are listed in `results/tables/OPSD_DE_household_removed_readings.csv`. Until v1.2 the loader averaged the cumulative readings first and differenced the average, which turned a household joining or leaving into a spike (one of 137 kWh on 1 Feb 2017) and kept an 804 kWh jump in one meter on 8 Jul 2017 (201 kWh in the average of the four households then reporting). |
 
 ---
 
