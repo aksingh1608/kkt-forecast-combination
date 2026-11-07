@@ -119,8 +119,44 @@ def load_external(name: str) -> tuple[pd.DataFrame, str, dict]:
     return df, meta["target"], meta
 
 
+# Largest hourly import one household can draw through a standard German
+# 63 A three-phase connection: 3 x 230 V x 63 A = 43.5 kW, i.e. 43.5 kWh in
+# one hour. Larger hourly steps in a cumulative meter are meter errors.
+OPSD_HOUSEHOLD_MAX_KWH_PER_HOUR: float = 43.5
+
+
+def opsd_household_series(raw: pd.DataFrame, max_kwh: float = OPSD_HOUSEHOLD_MAX_KWH_PER_HOUR
+                          ) -> tuple[pd.Series, pd.DataFrame]:
+    """Mean hourly grid import across households from cumulative meters.
+
+    Each household's cumulative reading is differenced on its own first, so a
+    household that starts or stops reporting does not create a jump in the
+    average. Negative steps (meter resets) and steps above ``max_kwh`` are set
+    to missing, and the households reporting in each hour are averaged.
+
+    Returns the series and a table of the readings that were set to missing.
+    """
+    inc = raw.diff()
+    neg = inc < 0
+    big = inc > max_kwh
+    removed = []
+    for col in raw.columns:
+        for t in inc.index[neg[col].to_numpy() | big[col].to_numpy()]:
+            removed.append({"timestamp": t, "household": col,
+                            "hourly_step_kwh": float(inc.at[t, col]),
+                            "reason": "negative step" if inc.at[t, col] < 0 else f"above {max_kwh} kWh"})
+    inc = inc.mask(neg | big)
+    return inc.mean(axis=1, skipna=True), pd.DataFrame(removed)
+
+
 def _load_opsd_household(path: Path, meta: dict) -> tuple[pd.DataFrame, str, dict]:
-    """OPSD household file → mean residential grid_import, differenced to kWh/h."""
+    """OPSD household file → mean residential hourly grid import (kWh/h).
+
+    Since v1.2 each household is differenced before averaging and meter
+    errors are removed (see :func:`opsd_household_series`). Earlier releases
+    averaged the cumulative readings first and differenced the average, which
+    turned a change in the set of reporting households into a spike.
+    """
     df = pd.read_csv(path, low_memory=False)
     dt_col = meta["datetime_col"]
     df[dt_col] = pd.to_datetime(df[dt_col], utc=True).dt.tz_convert(None)
@@ -140,9 +176,17 @@ def _load_opsd_household(path: Path, meta: dict) -> tuple[pd.DataFrame, str, dic
             f"Columns: {', '.join(df.columns[:8])}…"
         )
 
-    series = df[grid_cols].mean(axis=1, skipna=True).diff().clip(lower=0)
+    series, removed = opsd_household_series(df[grid_cols])
+    if len(removed):
+        big = removed[removed.reason != "negative step"]
+        logger.info("OPSD household: %d hourly readings set to missing (%d negative steps, %d above %.1f kWh)",
+                    len(removed), len(removed) - len(big), len(big), OPSD_HOUSEHOLD_MAX_KWH_PER_HOUR)
+        for _, r in big.iterrows():
+            logger.info("OPSD household: removed %s at %s: %.1f kWh in one hour",
+                        r.household, r.timestamp, r.hourly_step_kwh)
     out = pd.DataFrame({meta["target"]: series})
-    return out.dropna(), meta["target"], meta
+    return out.dropna(), meta["target"], {**meta, "n_readings_removed": int(len(removed)),
+                                          "removed_readings": removed}
 
 
 def _load_opsd_total(path: Path, meta: dict) -> tuple[pd.DataFrame, str, dict]:

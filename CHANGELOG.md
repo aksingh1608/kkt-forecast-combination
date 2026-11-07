@@ -45,6 +45,26 @@
 - `scripts/verify_claims.py` updated to the exact solver (tree mass 0.965 on
   OPSD-H, SARIMA ratio about 508 on OPSD-N, qualitative Friedman check).
 
+### Fixed: OPSD household target (v1.2, 7 November 2026)
+
+- `src/data/extra_loaders.py`: the OPSD-H target averaged the households'
+  cumulative meters and then differenced the average. When a household
+  started or stopped reporting, the average jumped and produced a fake spike
+  (137 kWh in one hour on 1 Feb 2017); a 201 kWh jump in one meter on
+  8 Jul 2017 was also kept. Each meter is now differenced first, negative
+  steps and steps above 43.5 kWh/h are set to missing, and the reporting
+  households are averaged (`opsd_household_series`). Tests in
+  `tests/test_opsd_household.py`.
+- Every OPSD-H artefact must be regenerated: `scripts/rerun_dataset.py`
+  (new) reruns all standalone models on one dataset and replaces only its
+  rows; then the lite-DL retuning, rolling origin, CSE, significance, pools
+  and folds for OPSD-H.
+- `scripts/verify_claims.py` now checks invariants (no boundary violation,
+  tree-dominated weights, Friedman pattern) instead of exact counts.
+- `scripts/build_paper.py`: sentences that name winners, ties and divergent
+  models are generated from the results; identical CSE and member forecasts
+  are reported as "identical", not as a CSE win; refit savings table.
+
 ### Fixed (7 November 2026)
 
 - SARIMA and ARIMA fits (in the CSE and as standalone models) now use

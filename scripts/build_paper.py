@@ -226,7 +226,7 @@ def tab_main(lb: pd.DataFrame, done: set, out: Path, N: dict) -> None:
         N[f"bestOtherRank{key}Name"] = disp(others.index[0])
         N[f"secondOtherRank{key}"] = f"{others.iloc[1]:.1f}"
         N[f"secondOtherRank{key}Name"] = disp(others.index[1])
-        N[f"csePlace{key}"] = str(int((r < r.get(CSE_RAW, np.inf)).sum()) + 1)
+        N[f"csePlace{key}"] = str(int((r < r.get(CSE_RAW, np.inf) - 1e-9).sum()) + 1)
     one = piv["one_step"]
     for ds in DATASETS:
         col = one[ds].dropna().sort_values()
@@ -242,6 +242,55 @@ def tab_main(lb: pd.DataFrame, done: set, out: Path, N: dict) -> None:
     tw = [(ds, m) for ds, m in tw if m in tree_models]
     N["nTreeWinsOne"] = {0: "none", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}[len(tw)]
     N["treeWinsOneList"] = ", ".join(f"{disp(m)} on {DS_LABEL[ds]}" for ds, m in tw) or "none"
+    # ---- sentences that depend on which model wins -------------------------
+    persist = {"Naive", "NaiveDrift", "SeasonalNaive"}
+    rec = piv["recursive"]
+    # recursive winners and exact ties at the top
+    tie_notes = []
+    for ds in DATASETS:
+        col = rec[ds].dropna().sort_values()
+        top = col[(col - col.iloc[0]).abs() <= 5e-4 * max(1.0, abs(col.iloc[0]))]
+        if len(top) > 1:
+            unit = "kW" if ds in ("UCI", "OPSD_DE_household") else ("MW" if ds == "OPSD_DE_total" else "")
+            names = " and ".join(disp(m) for m in top.index)
+            tie_notes.append(f"On {DS_LABEL[ds]} under recursion, {names} tie at {fnum(col.iloc[0])}~{unit}.".replace("~.", "."))
+    N["recTieNote"] = " ".join(tie_notes)
+    # OPSD-H recursive sentence
+    col = rec["OPSD_DE_household"].dropna().sort_values()
+    naive = rec.at["Naive", "OPSD_DE_household"]
+    learned = [m for m in col.index if m not in persist]
+    beaten = [m for m in learned if col[m] > naive + 1e-12]
+    if col.index[0] in persist:
+        N["recOPSDHSentence"] = (f"On OPSD-H the best model is persistence ({disp(col.index[0])}, {fnum(col.iloc[0])}~kW), "
+                                 f"that is, no model at all: {len(beaten)} of the {len(learned)} learned predictors are beaten "
+                                 f"by Naive persistence once they must consume their own outputs over 7\\,059 hours.")
+    else:
+        N["recOPSDHSentence"] = (f"On OPSD-H the best model is {disp(col.index[0])} ({fnum(col.iloc[0])}~kW), and {len(beaten)} of "
+                                 f"the {len(learned)} learned predictors are beaten by Naive persistence once they must consume "
+                                 f"their own outputs over 7\\,059 hours.")
+    N["bestRecOPSDHIsPersistence"] = "1" if col.index[0] in persist else "0"
+    trees = {m for m, f in FAMILY_GROUP.items() if f == "trees / boosting"}
+    def _top(colr):
+        colr = colr.dropna().sort_values()
+        return list(colr[(colr - colr.iloc[0]).abs() <= 5e-4 * max(1.0, abs(colr.iloc[0]))].index)
+    tl = [DS_LABEL[ds] for ds in DATASETS if any(m in trees for m in _top(rec[ds]))]
+    N["recTreeLeaderList"] = " and ".join(tl) if len(tl) <= 2 else ", ".join(tl[:-1]) + " and " + tl[-1]
+    N["nRecTreeLeaders"] = str(len(tl))
+    # divergent lagged linear models under recursion
+    div = []
+    for ds in DATASETS:
+        r, o = rec.at["Ridge", ds], one.at["Ridge", ds]
+        if np.isfinite(r) and r > 1e3 * o:
+            div.append(DS_LABEL[ds])
+    N["ridgeDivergeList"] = " and ".join(div) if div else "none"
+    lab2ds = {v: k for k, v in DS_LABEL.items()}
+    if div:
+        vals = " and ".join(f"{fnum(rec.at['Ridge', lab2ds[d]])} on {d}" for d in div)
+        N["ridgeDivergeSentence"] = (f"The regularised linear models, competitive one step ahead, diverge on {N['ridgeDivergeList']}: "
+                                     f"Ridge reaches RMSE {vals}, with Lasso and ElasticNet similar.")
+    else:
+        N["ridgeDivergeSentence"] = "The regularised linear models, competitive one step ahead, degrade under recursion but do not diverge."
+    N["nRidgeDiverge"] = str(len(div))
     N["ridgeRankOne"] = f"{ranks['one_step'].get('Ridge'):.1f}"
     N["etRankOne"] = f"{ranks['one_step'].get('ExtraTrees'):.1f}"
     N["catRankOne"] = f"{ranks['one_step'].get('CatBoost'):.1f}"
@@ -292,10 +341,15 @@ def tab_family(lb: pd.DataFrame, results: Path, done: set, out: Path, N: dict) -
     N["supDegMin"] = f"{sup.ratio.min():.2f}"
     N["supDegMax"] = f"{sup.ratio.max():.2f}"
     lead_rec = {}
-    for ds in ("ETTh1", "OPSD_DE_total"):
-        r_ = rec.xs(ds, level="Dataset").dropna()
-        m = r_.idxmin()
-        lead_rec[ds] = r_[m] / one[(m, ds)]
+    tree_models = {m for m, f in FAMILY_GROUP.items() if f == "trees / boosting"}
+    for ds in DATASETS:
+        r_ = rec.xs(ds, level="Dataset").dropna().sort_values()
+        top = r_[(r_ - r_.iloc[0]).abs() <= 5e-4 * max(1.0, abs(r_.iloc[0]))]
+        tm = [m for m in top.index if m in tree_models]
+        if tm:
+            lead_rec[ds] = r_[tm[0]] / one[(tm[0], ds)]
+    if not lead_rec:
+        lead_rec = {"none": float("nan")}
     N["treeLeadRecDegMin"] = f"{min(lead_rec.values()):.1f}"
     N["treeLeadRecDegMax"] = f"{max(lead_rec.values()):.1f}"
 
@@ -429,7 +483,20 @@ def tab_dm(results: Path, lb: pd.DataFrame, done: set, out: Path, N: dict) -> No
             ties = n_models - beats
             ref_disp = disp(ref.replace("_", " ")) if ref != CSE_SAFE else r"\textbf{CSE (ours)}"
             pend = (lambda s: rf"\pending{{{s}}}") if ds not in done else (lambda s: s)
+            twin = None
             if ref == CSE_SAFE:
+                # a model whose forecasts equal the CSE's (complete collapse)
+                same = dm[(dm.rmse_model - dm.rmse_ref).abs() <= 1e-9 * max(1.0, abs(dm.rmse_ref.iloc[0]))]
+                if len(same):
+                    twin = same.iloc[0]
+            if ref == CSE_SAFE and twin is not None:
+                tname = disp(str(twin.model).replace("_", " "))
+                verdict_counts[proto][ds] = "identical"
+                N[f"identModel{ds}{'One' if proto=='one_step' else 'Rec'}"] = tname
+                row = [DS_LABEL[ds], plabel, tname, fnum(twin.rmse_ref), fnum(twin.rmse_model),
+                       "$+$0.00", "1.000", "-- / $+$0.000", "identical",
+                       f"{beats} / {n_models}", str(ties)]
+            elif ref == CSE_SAFE:
                 row = [DS_LABEL[ds], plabel, ref_disp, "--", "--", "--", "--", "--", "CSE is best",
                        f"{beats} / {n_models}", str(ties)]
                 verdict_counts[proto][ds] = "best"
@@ -454,6 +521,7 @@ def tab_dm(results: Path, lb: pd.DataFrame, done: set, out: Path, N: dict) -> No
                 N[f"dm{ds}{'One' if proto=='one_step' else 'Rec'}delta"] = f"{r.cliffs_delta:.3f}"
                 N[f"dm{ds}{'One' if proto=='one_step' else 'Rec'}gap"] = f"{100*(r.rmse_model/r.rmse_ref-1):.1f}"
             N[f"beats{ds}{'One' if proto=='one_step' else 'Rec'}"] = f"{beats} of {n_models}"
+            N[f"nBeats{ds}{'One' if proto=='one_step' else 'Rec'}"] = str(beats)
             lines.append(" & ".join(row) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     (out / "tab_dm.tex").write_text("\n".join(lines) + "\n")
@@ -478,6 +546,11 @@ def tab_dm(results: Path, lb: pd.DataFrame, done: set, out: Path, N: dict) -> No
                             f"separated from it, while on {DS_LABEL[ds_b]} it trails by {gap_b:.1f}\\% and is "
                             f"separated at the 5\\% level.")
         N[f"orderingNote{key}"] = note
+        times = {0: "no times", 1: "once", 2: "twice", 3: "three times", 4: "four times", 5: "five times"}
+        N[f"tiesTimes{key}"] = times[sum(v == "tie" for v in vc.values())]
+        N[f"lossTimes{key}"] = times[sum(v == "CSE worse" for v in vc.values())]
+        N[f"identTimes{key}"] = times[sum(v == "identical" for v in vc.values())]
+        N[f"identList{key}"] = ", ".join(DS_LABEL[d] for d, v in vc.items() if v == "identical") or "none"
         N[f"nWins{key}"] = str(sum(v == "best" for v in vc.values()))
         N[f"nTies{key}"] = str(sum(v == "tie" for v in vc.values()))
         N[f"nLoss{key}"] = str(sum(v == "CSE worse" for v in vc.values()))
@@ -541,7 +614,9 @@ def tab_tunedcost(results: Path, lb: pd.DataFrame, done: set, out: Path, N: dict
         for ds in DATASETS:
             if ds in rt.index:
                 N[f"cseFit{ds}"] = f"{rt.at[ds, 'fit_time_s']:.0f}"
-                N[f"cseSkipped{ds}"] = str(rt.at[ds, "skipped_refits"]).replace("nan", "none").replace(";", ", ")
+                sk = str(rt.at[ds, "skipped_refits"])
+                sk = "none" if sk in ("nan", "") else ", ".join(MEMBER_LABEL.get(x, x) for x in sk.split(";"))
+                N[f"cseSkipped{ds}"] = sk
     lite = one[one.Model.isin(["NLinear", "DLinear"]) & one.Dataset.isin(["ETTh1", "ETTh2"])]
     N["liteR2ETTmin"] = f"{lite.R2.min():.2f}".replace("-", "$-$")
     N["liteR2ETTmax"] = f"{lite.R2.max():.2f}".replace("-", "$-$")
@@ -561,7 +636,7 @@ def tab_sensitivity(results: Path, out: Path, N: dict) -> None:
     df = pd.read_csv(p)
     pools = ["paper5", "paper5+xgb_rf", "paper5+linear", "paper5+lite_dl", "trees8", "all"]
     plabel = {"paper5": "paper five", "paper5+xgb_rf": "+ XGBoost, RF", "paper5+linear": "+ Ridge, Lasso, EN",
-              "paper5+lite_dl": "+ NLinear, DLinear", "trees8": "eight tree models", "all": "all 22"}
+              "paper5+lite_dl": "+ NLinear, DLinear", "trees8": "eight tree models", "all": "all standalone"}
     lines = [r"\begin{tabular}{llrrrrrrr}", r"\toprule",
              r"Data & Pool & $K$ & zeroed & tree mass & viol. & RMSE blend & RMSE best member & gap \\", r"\midrule"]
     for ds in DATASETS:
@@ -581,8 +656,17 @@ def tab_sensitivity(results: Path, out: Path, N: dict) -> None:
     N["sensViol"] = str(int(df.necessity_violations.sum()))
     N["sensTreeMassMin"] = f"{df.tree_mass.min():.3f}"
     N["sensZeroFracMin"] = f"{(df.n_zero / df.K).min()*100:.0f}"
+    N["nSensAnyZero"] = str(int((df.n_zero > 0).sum()))
+    nz = df[df.n_zero == 0]
+    N["sensNoZeroDesc"] = "; ".join(f"{DS_LABEL[r.dataset]} with {r.pool.replace('paper5', 'the paper five').replace('+', ' + ')} ($K = {int(r.K)}$)"
+                                    for _, r in nz.iterrows()) or "none"
+
     N["sensZeroFracMax"] = f"{(df.n_zero / df.K).max()*100:.0f}"
     big = df[df.pool == "all"]
+    if len(big):
+        N["sensAllZeroMin"] = str(int(big.n_zero.min()))
+        N["sensAllZeroMax"] = str(int(big.n_zero.max()))
+        N["sensAllKMin"] = str(int(big.K.min()))
     if len(big):
         N["sensAllK"] = str(int(big.K.max()))
         N["sensAllActiveMax"] = str(int(big.n_active.max()))
@@ -625,8 +709,33 @@ def tab_folds(results: Path, out: Path, N: dict) -> None:
     lines += [r"\bottomrule", r"\end{tabular}"]
     (out / "tab_folds.tex").write_text("\n".join(lines) + "\n")
     N["foldRows"] = str(len(df))
+    full = {}
     for _, r in df[np.isclose(df.train_end_frac, 0.8)].iterrows():
         N[f"cseFullFit{r.dataset}"] = f"{r.fit_time_s:.0f}"   # all five members refit
+        full[r.dataset] = float(r.fit_time_s)
+    rp = results / "tables" / "cse_refit_times.csv"
+    if rp.exists() and full:
+        rt = pd.read_csv(rp).set_index("dataset")
+        rows = []
+        for ds in DATASETS:
+            if ds in rt.index and ds in full:
+                save = 100.0 * (1.0 - float(rt.at[ds, "fit_time_s"]) / full[ds])
+                rows.append((ds, save, float(rt.at[ds, "fit_time_s"]), full[ds]))
+        real = [r for r in rows if r[1] >= 5.0]
+        N["nRefitSaved"] = str(len(real))
+        N["refitSaveMin"] = f"{min(r[1] for r in real):.0f}" if real else "0"
+        N["refitSaveMax"] = f"{max(r[1] for r in real):.0f}" if real else "0"
+        none = [r for r in rows if r[1] < 5.0]
+        N["refitNoSaveList"] = ", ".join(DS_LABEL[r[0]] for r in none) or "none"
+        lines = [r"\begin{tabular}{lrrrp{3.1cm}}", r"\toprule",
+                 r"Data & active (s) & full (s) & saving & members not refit \\", r"\midrule"]
+        for ds, sv, a, f in rows:
+            sk = str(rt.at[ds, "skipped_refits"])
+            sk = "none" if sk in ("nan", "") else ", ".join(MEMBER_LABEL.get(x, x) for x in sk.split(";"))
+            svs = f"{sv:.0f}\\%" if sv >= 5.0 else "none"
+            lines.append(f"{DS_LABEL[ds]} & {a:.0f} & {f:.0f} & {svs} & {sk} \\\\")
+        lines += [r"\bottomrule", r"\end{tabular}"]
+        (out / "tab_refit.tex").write_text("\n".join(lines) + "\n")
     N["foldDatasets"] = ", ".join(DS_LABEL[d] for d in DATASETS if d in set(df.dataset))
     N["foldViol"] = str(int(df.necessity_violations.sum()))
     N["foldTreeMassMin"] = f"{df.tree_mass.min():.3f}"
@@ -690,6 +799,19 @@ def main() -> None:
     N["doneList"] = ", ".join(DS_LABEL[d] for d in DATASETS if d in done) or "none"
     N["pendingList"] = ", ".join(DS_LABEL[d] for d in DATASETS if d not in done) or "none"
     N["nPending"] = str(sum(d not in done for d in DATASETS))
+    rr = args.results / "tables" / "OPSD_DE_household_removed_readings.csv"
+    if rr.exists():
+        rem = pd.read_csv(rr)
+        big = rem[rem.reason != "negative step"]
+        N["nRemovedNeg"] = str(int((rem.reason == "negative step").sum()))
+        N["nRemovedBig"] = str(len(big))
+        N["removedBigDesc"] = "; ".join(
+            f"{pd.Timestamp(r.timestamp):%d %B %Y}, {r.hourly_step_kwh:.0f}~kWh" for _, r in big.iterrows()) or "none"
+        N["opsdhCleaned"] = "1"
+    else:
+        N["nRemovedNeg"] = N["nRemovedBig"] = "0"
+        N["removedBigDesc"] = "none"
+        N["opsdhCleaned"] = "0"
     wdf, bdf, masses = diag_tables(args.results)
     tab_main(lb, done, args.out, N)
     tab_family(lb, args.results, done, args.out, N)
