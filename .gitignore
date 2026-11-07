@@ -54,3 +54,4 @@ paper/*.fdb_latexmk
 paper/*.pdf
 paper/b*.log
 paper/*.txt
+paper/main_short.*

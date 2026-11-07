@@ -8,8 +8,19 @@ read from `generated/`, which `scripts/build_paper.py` writes from
 ```bash
 python scripts/build_paper.py          # -> paper/generated/*.tex
 python scripts/build_figures.py        # -> figures/fig2_kkt_boundary.pdf, fig3_cd_diagrams_*.pdf
+python scripts/build_paper_figures.py  # -> figures/fig4_dm_pvalues.pdf, fig5_error_drift_uci.pdf, fig6_horizon_ranks.pdf
 cd paper && pdflatex main && pdflatex main && pdflatex main
 ```
+
+## Two versions from one file
+
+`\fullversiontrue` near the top of `main.tex` builds the full paper (about
+14 pages: six figures, twelve tables, appendix). `\fullversionfalse` builds
+the 10-page submission version: Fig. 1 and Figs. 4 to 6, the pool, fold,
+tuned, refit-time and cost tables and the appendix table are left out and
+referred to as supplementary material (Tables S1 to S5). `make paper-short`
+does this without editing the file. The supplementary file is the full
+version.
 
 Files
 

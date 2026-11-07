@@ -15,7 +15,7 @@ ifeq ($(wildcard $(PYTHON)),)
   PYTHON := python3
 endif
 
-.PHONY: help data features smoke benchmark rolling stats figures tables verify all rerun-cse recheck sensitivity folds paper paper-zip
+.PHONY: help data features smoke benchmark rolling stats figures tables verify all rerun-cse recheck sensitivity folds paper paper-short paper-zip
 
 help:
 	@echo "Targets: data features smoke benchmark rolling stats figures tables verify all recheck rerun-cse sensitivity folds paper paper-zip"
@@ -63,12 +63,17 @@ folds:
 	$(PYTHON) scripts/multi_fold_cse.py
 
 paper: figures
+	$(PYTHON) scripts/build_paper_figures.py
 	$(PYTHON) scripts/build_paper.py
 	cd paper && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main | tail -2
 
+# the 10-page submission version: supplementary tables and Figs. 1, 4 to 6 left out
+paper-short: paper
+	cd paper && sed 's/^\\fullversiontrue/\\fullversionfalse/' main.tex > main_short.tex && pdflatex -interaction=nonstopmode main_short >/dev/null && pdflatex -interaction=nonstopmode main_short >/dev/null && pdflatex -interaction=nonstopmode main_short | tail -2
+
 paper-zip: paper
 	rm -f paper_overleaf.zip
-	zip -qr paper_overleaf.zip paper/main.tex paper/fig1_architecture.tex paper/generated paper/README.md figures/fig2_kkt_boundary.pdf figures/fig3_cd_diagrams_one_step.pdf figures/fig3_cd_diagrams_recursive.pdf
+	zip -qr paper_overleaf.zip paper/main.tex paper/fig1_architecture.tex paper/generated paper/README.md figures/fig2_kkt_boundary.pdf figures/fig3_cd_diagrams_one_step.pdf figures/fig3_cd_diagrams_recursive.pdf figures/fig4_dm_pvalues.pdf figures/fig5_error_drift_uci.pdf figures/fig6_horizon_ranks.pdf
 	@echo wrote paper_overleaf.zip
 
 # End-to-end: download → feature check → full benchmark chain → derived artefacts.

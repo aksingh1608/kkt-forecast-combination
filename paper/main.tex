@@ -34,6 +34,11 @@
 \definecolor{accent}{RGB}{23,70,118}
 \graphicspath{{../figures/}{figures/}}
 \input{generated/numbers}
+% ---- full version (all figures and tables, about 15 pages) or the 10-page
+%      submission (pool, fold and appendix tables and Figs. 4 to 6 go to the
+%      supplementary file). Flip the next line.
+\newif\iffullversion
+\fullversiontrue
 % ---- pending marker: red until every dataset is refit with the exact solver
 \ifnum\nPending=0
   \newcommand{\pending}[1]{#1}
@@ -101,11 +106,11 @@ This paper addresses both points in one controlled study on five datasets rather
 
 \textbf{Protocol and significance.} Rolling-origin designs \cite{r27} are the accepted way to obtain many forecasts at a given horizon; the Diebold-Mariano test \cite{r22} with the Harvey-Leybourne-Newbold correction \cite{r23} is the standard test of equal predictive accuracy, Holm adjustment \cite{r26} controls the family-wise error rate, and Dem\v{s}ar's Friedman-Nemenyi procedure \cite{r24} is the standard multi-dataset comparison. Distribution-free effect sizes such as Cliff's $\delta$ \cite{r25} are increasingly requested alongside $p$-values, since with thousands of test points almost any difference becomes significant.
 
-\input{fig1_architecture}
+\iffullversion\input{fig1_architecture}\fi
 
 \section{Problem Setup, Data and Protocols}
 \label{sec:setup}
-Fig.~\ref{fig:arch} gives the architecture of the study. Panel (a) shows the five layers, from the raw series to the evidence, with the object that passes between them on each arrow; no arrow carries test data backwards. Panel (b) opens the convex stacking ensemble and the KKT analysis that reads the same validation geometry.
+\iffullversion Fig.~\ref{fig:arch} gives the architecture of the study. Panel (a) shows the five layers, from the raw series to the evidence, with the object that passes between them on each arrow; no arrow carries test data backwards. Panel (b) opens the convex stacking ensemble and the KKT analysis that reads the same validation geometry.\else The study has five layers: the raw series, one causal feature pipeline and one chronological split, the model zoo and the convex stacking ensemble, the two protocols, and the evidence layer of metrics and tests; the KKT analysis reads the same validation geometry as the ensemble and never touches the test set (an architecture diagram is given in the supplementary material).\fi
 
 \subsection{Two forecasting regimes}
 \label{sec:regimes}
@@ -289,7 +294,7 @@ Table~\ref{tab:weights} reports the learned weights, and the collapse is systema
 
 \begin{figure*}[!tb]
 \centering
-\includegraphics[width=0.9\textwidth]{fig2_kkt_boundary.pdf}
+\includegraphics[width=\iffullversion 0.9\else 0.78\fi\textwidth]{fig2_kkt_boundary.pdf}
 \caption{The exclusion boundary of Proposition~\ref{prop:boundary}, one panel per dataset. Each point is one CSE member, placed by its validation error-scale ratio to the leader (horizontal, logarithmic) and its uncentred error correlation with the leader (vertical); the dashed curve is $\rho = \sigma_{\mathrm{best}}/\sigma_i$ and the star is the leader. Filled circles received positive weight, crosses are excluded members with zero weight, and open circles are admissible members zeroed by the full KKT system. No member above the curve was admitted on any dataset.}
 \label{fig:boundary}
 \end{figure*}
@@ -306,6 +311,7 @@ The collapse is thus a property of the geometry of the simplex-constrained least
 
 \subsection{Sensitivity to the member pool and to the split}
 \label{sec:sens}
+\iffullversion
 \begin{table*}[!tb]
 \caption{Sensitivity of the collapse to the member pool, one-step protocol, exact simplex weights on the validation slice. Pools use the benchmark's standalone model configurations, so the ``paper five'' row is the same five families with slightly different hyper-parameters from the CSE of Table~\ref{tab:weights}. ``zeroed'' counts members with exactly zero weight, ``viol.'' counts members above the boundary that received weight, and ``gap'' is the blend's test RMSE relative to its best active member. On OPSD-N the standalone SARIMA and Holt-Winters fits are skipped for memory, as in the main benchmark, so each pool there has two fewer members.}
 \label{tab:sens}
@@ -322,11 +328,20 @@ The collapse is thus a property of the geometry of the simplex-constrained least
 \setlength{\tabcolsep}{4pt}
 \input{generated/tab_folds}
 \end{table*}
-Two experiments test whether the collapse is an artefact of the five chosen members or of the single split. Table~\ref{tab:sens} stacks six different pools on the simplex: the paper's five families, the same five plus XGBoost and Random-Forest, plus three regularised linear models, plus the tuned NLinear and DLinear, the eight tree and boosting models alone, and every standalone model in the benchmark. Table~\ref{tab:folds} refits the CSE on four expanding windows per series. Across the \sensRows{} pool-dataset combinations the screen is violated \sensViolTimes, and at least one member receives exactly zero weight in \nSensAnyZero{} of them (the exception is \sensNoZeroDesc). Tree members hold the majority of the mass in \nSensHighTree{} of the \sensRows{} cases. In the remaining \nSensLowTree{} the mass moves to a member the CSE does not contain (\sensLowTreeList): the solver follows the validation leader, and on the ETT series the regularised linear models on lagged features are competitive with the trees one step ahead (Table~\ref{tab:main}). With every standalone model offered (\sensAllK, or \sensAllKMin{} on OPSD-N), the solver zeroes between \sensAllZeroMin{} and \sensAllZeroMax{} of them and keeps between \sensAllActiveMin{} and \sensAllActiveMax{} (\sensAllDesc). What persists under every pool is the collapse onto a handful of members with exact zeros elsewhere; the identity of the survivors is a property of the pool. The blend's test RMSE relative to its best active member ranges from \sensGapMin\% to \sensGapMax\%, and is lower than the best member in \sensGapBetter{} of \sensRows{} cases. Across the \foldRows{} folds the screen is violated \foldViolTimes, the tree mass never falls below \foldTreeMassMin, and the CSE is better than its best member on \foldBetter{} folds and worse on \foldWorse{}, by \foldGapMin\% to \foldGapMax\%. Violations of the screen on the folds: \foldViolDesc. Such cases arise when other active members cancel part of the admitted member's error, the mechanism of Remark~\ref{rem:generalK}; where the member sits near zero correlation the screen is decided by the sign of a small number and the admitted weight is negligible. The collapse onto few members, and the small and sign-varying gain of the blend over its best member, do not depend on the choice of five members or on the position of the split; which members survive does.
+\fi
+Two experiments test whether the collapse is an artefact of the five chosen members or of the single split. \iffullversion Table~\ref{tab:sens}\else Table~S1 in the supplementary material\fi{} stacks six different pools on the simplex: the paper's five families, the same five plus XGBoost and Random-Forest, plus three regularised linear models, plus the tuned NLinear and DLinear, the eight tree and boosting models alone, and every standalone model in the benchmark. \iffullversion Table~\ref{tab:folds}\else Table~S2 in the supplementary material\fi{} refits the CSE on four expanding windows per series. Across the \sensRows{} pool-dataset combinations the screen is violated \sensViolTimes, and at least one member receives exactly zero weight in \nSensAnyZero{} of them (the exception is \sensNoZeroDesc). Tree members hold the majority of the mass in \nSensHighTree{} of the \sensRows{} cases. In the remaining \nSensLowTree{} the mass moves to a member the CSE does not contain (\sensLowTreeList): the solver follows the validation leader, and on the ETT series the regularised linear models on lagged features are competitive with the trees one step ahead (Table~\ref{tab:main}). With every standalone model offered (\sensAllK, or \sensAllKMin{} on OPSD-N), the solver zeroes between \sensAllZeroMin{} and \sensAllZeroMax{} of them and keeps between \sensAllActiveMin{} and \sensAllActiveMax{} (\sensAllDesc). What persists under every pool is the collapse onto a handful of members with exact zeros elsewhere; the identity of the survivors is a property of the pool. The blend's test RMSE relative to its best active member ranges from \sensGapMin\% to \sensGapMax\%, and is lower than the best member in \sensGapBetter{} of \sensRows{} cases. Across the \foldRows{} folds the screen is violated \foldViolTimes, the tree mass never falls below \foldTreeMassMin, and the CSE is better than its best member on \foldBetter{} folds and worse on \foldWorse{}, by \foldGapMin\% to \foldGapMax\%. Violations of the screen on the folds: \foldViolDesc. Such cases arise when other active members cancel part of the admitted member's error, the mechanism of Remark~\ref{rem:generalK}; where the member sits near zero correlation the screen is decided by the sign of a small number and the admitted weight is negligible. The collapse onto few members, and the small and sign-varying gain of the blend over its best member, do not depend on the choice of five members or on the position of the split; which members survive does.
 
 \subsection{Rolling-origin horizon results}
 \label{sec:horizon}
-The lower blocks of Table~\ref{tab:family} give the mean rank at each horizon, by model and by family. The pattern predicted by \eqref{eq:ar1} is visible: tree and boosting models hold mean rank \ranktreeHOne{} at $h = 1$ and drift to \ranktreeHTwoFour{} at $h = 24$, the lightweight linear models move the other way from \rankliteHOne{} to \rankliteHTwoFour, and the lagged linear family stays close to flat (\ranklinHOne{} at $h=1$, \ranklinHTwoFour{} at $h=24$). The CSE sits at mean rank \rankcseHOnemodel{} at $h = 1$, behind \bestRankHOne{} (\bestRankHOneVal), and falls to \rankcseHTwoFourmodel{} at $h = 24$, tracking its tree members. Per dataset the reversal is complete: at $h = 24$ the best models are \winnersHTwoFour, whereas at $h = 1$ the winners are \winnersHOne, \ifnum\nTreeWinnersHOne=5 a clean sweep for trees\else trees on \nTreeWinnersHOne{} of the five series\fi. The tree advantage is horizon-conditional, and it is gone by one day ahead.
+\iffullversion
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig6_horizon_ranks.pdf}
+\caption{Rolling-origin mean rank against forecast horizon, by family, over the five datasets and 24 origins each (lower is better). The tree and boosting family and the CSE lead at $h = 1$ and lose their advantage by $h = 24$, while the direct linear models and persistence move the other way.}
+\label{fig:horizon}
+\end{figure}
+\fi
+The lower blocks of Table~\ref{tab:family} give the mean rank at each horizon, by model and by family\iffullversion, and Fig.~\ref{fig:horizon} draws the family curves\fi. The pattern predicted by \eqref{eq:ar1} is visible: tree and boosting models hold mean rank \ranktreeHOne{} at $h = 1$ and drift to \ranktreeHTwoFour{} at $h = 24$, the lightweight linear models move the other way from \rankliteHOne{} to \rankliteHTwoFour, and the lagged linear family stays close to flat (\ranklinHOne{} at $h=1$, \ranklinHTwoFour{} at $h=24$). The CSE sits at mean rank \rankcseHOnemodel{} at $h = 1$, behind \bestRankHOne{} (\bestRankHOneVal), and falls to \rankcseHTwoFourmodel{} at $h = 24$, tracking its tree members. Per dataset the reversal is complete: at $h = 24$ the best models are \winnersHTwoFour, whereas at $h = 1$ the winners are \winnersHOne, \ifnum\nTreeWinnersHOne=5 a clean sweep for trees\else trees on \nTreeWinnersHOne{} of the five series\fi. The tree advantage is horizon-conditional, and it is gone by one day ahead.
 
 \begin{table*}[!tb]
 \caption{Diebold-Mariano test of the CSE against the best model per dataset and protocol on the fixed split, Holm adjusted, with both effect sizes; negative statistics favour the reference. The last two columns count the models that leader beats at the 5\% level and those it cannot be separated from.}
@@ -339,22 +354,41 @@ The lower blocks of Table~\ref{tab:family} give the mean rank at each horizon, b
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{fig3_cd_diagrams_one_step.pdf}\\[2pt]
-\includegraphics[width=\columnwidth]{fig3_cd_diagrams_recursive.pdf}
+\includegraphics[width=\iffullversion\columnwidth\else 0.88\columnwidth\fi]{fig3_cd_diagrams_one_step.pdf}\\[2pt]
+\includegraphics[width=\iffullversion\columnwidth\else 0.88\columnwidth\fi]{fig3_cd_diagrams_recursive.pdf}
 \caption{Nemenyi critical-difference diagrams over five datasets, RMSE ranks, one-step (top) and recursive (bottom). Models joined by a bar are not significantly different at the 5\% level.}
 \label{fig:cd}
 \end{figure}
 
 \subsection{Statistical significance}
 \label{sec:sig}
-Table~\ref{tab:dm} tests the ensemble against the best model on each dataset and protocol, its last two columns showing how decisive each leader is against the rest of the field. One step ahead the CSE wins on \winListOne, where it is the reference and beats all \nBeatsOPSDDEtotalOne{} other models after Holm correction; it ties on \tieClausesOne; and it loses on \lossClausesOne. Under recursion it loses on \nLossRec{} datasets and is identical to \identModelETThTwoRec{} on \identListRec, where its weight sits entirely on that member. This is the answer to RQ2 and it is largely negative: a convex blend of five heterogeneous members does not reliably beat its strongest member, and when the collapse is complete it cannot, by construction.
+\iffullversion
+\begin{figure*}[!tb]
+\centering
+\includegraphics[width=0.92\textwidth]{fig4_dm_pvalues.pdf}
+\caption{Holm-adjusted Diebold-Mariano $p$-values of every common model against the best model, one row per dataset and protocol. White cells are separable from the leader at the 5\% level, shaded cells marked ``tie'' are not, hatched cells are the leader itself, and ``n/a'' marks the classical fits skipped on OPSD-N. Under teacher forcing the leaders are separable from most of the field; under recursion almost every learned model is separable from the leader, but the leader is a different model on every series.}
+\label{fig:dm}
+\end{figure*}
+\fi
+Table~\ref{tab:dm} tests the ensemble against the best model on each dataset and protocol, its last two columns showing how decisive each leader is against the rest of the field\iffullversion, and Fig.~\ref{fig:dm} shows the same tests for every model\fi. One step ahead the CSE wins on \winListOne, where it is the reference and beats all \nBeatsOPSDDEtotalOne{} other models after Holm correction; it ties on \tieClausesOne; and it loses on \lossClausesOne. Under recursion it loses on \nLossRec{} datasets and is identical to \identModelETThTwoRec{} on \identListRec, where its weight sits entirely on that member. This is the answer to RQ2 and it is largely negative: a convex blend of five heterogeneous members does not reliably beat its strongest member, and when the collapse is complete it cannot, by construction.
 
 The ordering by RMSE gap and the ordering by significance need not agree. \orderingNoteOne{} The Diebold-Mariano statistic weighs the mean loss differential against its own variance, whereas RMSE is driven by the tails, so a small but persistent gap is easier to detect than a larger one carried by a few hours. The effect sizes matter alongside the $p$-values. Where the CSE loses on ETTh1 one step ahead, $d = \dmETThOneOned$ and $\delta = \dmETThOneOnedelta$: statistically unambiguous, practically small. Where it loses on OPSD-H recursively, $d = \dmOPSDDEhouseholdRecd$ and $\delta = \dmOPSDDEhouseholdRecdelta$, a large effect and a worse forecaster. Reporting only $p$-values would have hidden that distinction, and reporting only RMSE would have hidden both. On the operational scale, the one-step differences among the leading tree models, the quantile booster and the CSE are a few percent of RMSE on every series, which is within the range a utility would attribute to feature or calibration changes rather than to model class.
 
 The Friedman result is the single most consequential number here. Under teacher forcing the null of equal accuracy across the \friedKOne{} common models is rejected decisively ($\chi^2 = \friedChiOne$, $p \friedPOne$); under the recursive protocol, on the same datasets and models, it cannot be rejected ($\chi^2 = \friedChiRec$, $p \friedPRec$). With five datasets the Friedman test has limited power, so the second result is weak evidence of equality; it is nevertheless a direct statement that the discriminative power of the benchmark, the very thing a leaderboard is supposed to supply, comes mostly from supplying true lagged actuals at test time. Fig.~\ref{fig:cd} shows this as critical-difference diagrams: the one-step diagram separates the field into recognisable groups, the recursive diagram connects almost everything into one clique.
 
-\subsection{Tuned baselines and cost}
+\subsection{Error dynamics, tuned baselines and cost}
 \label{sec:cost}
+\iffullversion
+\begin{figure*}[!tb]
+\centering
+\includegraphics[width=0.9\textwidth]{fig5_error_drift_uci.pdf}
+\caption{Daily mean (left) and cumulative (right) absolute error over the UCI test period for seven models, one-step protocol on top and recursive below. One step ahead the cumulative curves are close to straight lines with different slopes; under recursion the supervised learners' daily error is not stationary and their curves steepen where the series is volatile, the signature of \eqref{eq:ar1}. SARIMA and Naive are identical in both rows because the protocol does not touch them.}
+\label{fig:drift}
+\end{figure*}
+Aggregate metrics hide when a model fails. Fig.~\ref{fig:drift} plots daily and cumulative absolute error across the UCI test period under both protocols. One step ahead the cumulative curves are close to straight lines with different slopes: the error rate is stationary and the ranking established early holds throughout. Under recursion the supervised learners' daily error is not stationary; their curves steepen where the series is volatile and flatten where it is calm, since a rollout that has drifted from the truth does not recover until the seasonal structure pulls it back. The classical models, which never had recent truth beyond the origin, show no such change between panels.
+
+\fi
+\iffullversion
 \begin{table}[!t]
 \caption{Tuned NLinear and DLinear configurations (Optuna search over lookback, ridge penalty, kernel size and clipping quantile, objective one-step validation RMSE) and their test scores.}
 \label{tab:tuned}
@@ -363,6 +397,8 @@ The Friedman result is the single most consequential number here. Under teacher 
 \setlength{\tabcolsep}{4pt}
 \input{generated/tab_tuned}
 \end{table}
+\fi
+\iffullversion
 \begin{table}[!t]
 \caption{Training time of the CSE in seconds when only the members with positive weight are refit on the full training partition, against the same fit with every member refit (the 80\% expanding-window fold, identical training data). Forecasts are identical in both cases. Times are single wall-clock runs on one laptop.}
 \label{tab:refit}
@@ -371,6 +407,8 @@ The Friedman result is the single most consequential number here. Under teacher 
 \setlength{\tabcolsep}{4pt}
 \input{generated/tab_refit}
 \end{table}
+\fi
+\iffullversion
 \begin{table}[!t]
 \caption{Training time in seconds, one-step protocol, single CPU core. The CSE row includes the validation fits of all five members and the refit of the members with positive weight only.}
 \label{tab:cost}
@@ -379,9 +417,10 @@ The Friedman result is the single most consequential number here. Under teacher 
 \setlength{\tabcolsep}{4pt}
 \input{generated/tab_cost}
 \end{table}
-Both lightweight linear models were tuned with reversible instance normalisation \cite{r30}, robust clipping and an Optuna \cite{r31} search (Table~\ref{tab:tuned}). On UCI, DLinear reaches \dlinearUCI~kW, in line with NLinear and SARIMA. On ETT both remain weak ($R^2$ between \liteRTwoETTmin{} and \liteRTwoETTmax), and we report that rather than dropping the rows. The objective here was one-step validation RMSE, not the long-horizon regime these architectures were designed for, and the lookbacks selected on ETTh1 are far shorter than the 336-step windows of the original setting. That is a limitation of this benchmark's treatment of them, not evidence about the architectures.
+\fi
+Both lightweight linear models were tuned with reversible instance normalisation \cite{r30}, robust clipping and an Optuna \cite{r31} search (\iffullversion Table~\ref{tab:tuned}\else Table~S3 in the supplementary material\fi). On UCI, DLinear reaches \dlinearUCI~kW, in line with NLinear and SARIMA. On ETT both remain weak ($R^2$ between \liteRTwoETTmin{} and \liteRTwoETTmax), and we report that rather than dropping the rows. The objective here was one-step validation RMSE, not the long-horizon regime these architectures were designed for, and the lookbacks selected on ETTh1 are far shorter than the 336-step windows of the original setting. That is a limitation of this benchmark's treatment of them, not evidence about the architectures.
 
-Accuracy is not matched by cost (Table~\ref{tab:cost}). HistGradientBoosting trains in under \hgbTimeMax~s on every dataset and is within a few percent of the leaders one step ahead, while the CSE costs \cseTimeMin~s to \cseTimeMax~s, between \costRatioLgbMin{} and \costRatioLgbMax{} times a single LightGBM fit, because it fits five members on the validation window and then refits the active ones. The KKT analysis reduces that cost directly. A member with zero weight never enters the blend, so skipping its second fit changes nothing in the forecasts. Table~\ref{tab:refit} compares the ensemble's training time with and without that step: the saving is \refitSaveMin\% to \refitSaveMax\% on \nRefitSaved{} series and negligible on \refitNoSaveList, where the only member skipped is the cheap Holt-Winters fit and the expensive SARIMA member keeps a weight of \wSarimaOPSDNsci{} and must be refit. Removing such a member by a weight threshold would recover the saving there at no visible cost in accuracy, but we report the exact solution. The same information is available before the second fit on any series, because the weights are computed from the validation errors alone. For a deployment that gains nothing over a single boosted model, and on four of five datasets it gains nothing, the remaining cost is still hard to justify; the diagnosis at least tells the practitioner so in advance.
+Accuracy is not matched by cost (\iffullversion Table~\ref{tab:cost}\else Table~S5 in the supplementary material\fi). HistGradientBoosting trains in under \hgbTimeMax~s on every dataset and is within a few percent of the leaders one step ahead, while the CSE costs \cseTimeMin~s to \cseTimeMax~s, between \costRatioLgbMin{} and \costRatioLgbMax{} times a single LightGBM fit, because it fits five members on the validation window and then refits the active ones. The KKT analysis reduces that cost directly. A member with zero weight never enters the blend, so skipping its second fit changes nothing in the forecasts. \iffullversion Table~\ref{tab:refit}\else Table~S4 in the supplementary material\fi{} compares the ensemble's training time with and without that step: the saving is \refitSaveMin\% to \refitSaveMax\% on \nRefitSaved{} series and negligible on \refitNoSaveList, where the only member skipped is the cheap Holt-Winters fit and the expensive SARIMA member keeps a weight of \wSarimaOPSDNsci{} and must be refit. Removing such a member by a weight threshold would recover the saving there at no visible cost in accuracy, but we report the exact solution. The same information is available before the second fit on any series, because the weights are computed from the validation errors alone. For a deployment that gains nothing over a single boosted model, and on four of five datasets it gains nothing, the remaining cost is still hard to justify; the diagnosis at least tells the practitioner so in advance.
 
 \section{Discussion}
 \subsection{Answers to the research questions}
@@ -418,6 +457,7 @@ We reported a controlled benchmark of up to 23 forecasters on five hourly energy
 
 The negative results matter as much. The ensemble does not reliably beat its strongest member, and the leaderboard that motivates ensembles is largely protocol-generated, since equal accuracy across \friedKOne{} models is rejected under teacher forcing and cannot be rejected under a recursive protocol on the same data. For practitioners: draw the error-geometry diagram before fitting combination weights, refit only what the weights keep, evaluate every family under the protocol you will deploy, and treat a one-step leaderboard as a statement about the availability of recent truth rather than about model capacity.
 
+\iffullversion
 \appendices
 \section{Per-Dataset Rolling-Origin Results}
 Table~\ref{tab:app} gives rolling-origin test RMSE at each horizon for every model, averaged over 24 forecast origins per dataset.
@@ -429,9 +469,10 @@ Table~\ref{tab:app} gives rolling-origin test RMSE at each horizon for every mod
 \setlength{\tabcolsep}{1.6pt}
 \input{generated/tab_app}
 \end{table*}
+\fi
 
 \section*{Reproducibility}
-Every table, figure and inline number is regenerated by script from the released artefact directory (\texttt{leaderboards.csv}, \texttt{cse\_diagnostics/}, \texttt{multistep\_rolling/}, \texttt{significance/}, \texttt{tables/}). Seeds are fixed at 42 and no value was transcribed by hand. The code and the artefacts are released under the Apache License 2.0 at \url{https://github.com/aksingh1608/kkt-forecast-combination}; the five series are public and remain under their own upstream terms, which the repository documents together with the retrieval and cleaning steps.
+Every table, figure and inline number is regenerated by script from the released artefact directory; seeds are fixed at 42 and no value was transcribed by hand. Code and artefacts are released under the Apache License 2.0 at \url{https://github.com/aksingh1608/kkt-forecast-combination}; the five series are public and remain under their own upstream terms, which the repository documents together with the retrieval and cleaning steps.
 
 \begin{thebibliography}{33}
 \bibitem{r1} T. Hong et al., ``Energy forecasting: A review and outlook,'' \emph{IEEE Open Access J. Power Energy}, vol. 7, pp. 376--388, 2020.
