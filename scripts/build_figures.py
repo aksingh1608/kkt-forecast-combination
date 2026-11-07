@@ -14,8 +14,10 @@
 
 """Regenerate manuscript figures into ``figures/`` as PNG (300 dpi) and PDF.
 
-Named by manuscript number. Sources are CSVs/pickles under ``results/`` —
-never the diagnostic ``results/multistep/`` prefix tables.
+Writes Fig. 2 (KKT boundary) and Fig. 3 (CD diagrams) of the manuscript from
+the CSVs and pickles under ``results/``, keeps the rendered Fig. 1, and copies
+the DM heat maps (``fig5_dm_heatmap__*``, not used by the paper). Figs. 4 to 6
+of the manuscript come from ``scripts/build_paper_figures.py``.
 
 Run::
 

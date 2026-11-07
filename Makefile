@@ -7,7 +7,6 @@
 #   rolling     many hours
 #   stats       minutes
 #   figures     minutes
-#   tables      <1 min
 #   verify      <1 min
 
 PYTHON ?= .venv/bin/python
@@ -15,10 +14,10 @@ ifeq ($(wildcard $(PYTHON)),)
   PYTHON := python3
 endif
 
-.PHONY: help data features smoke benchmark rolling stats figures tables verify all rerun-cse recheck sensitivity folds paper paper-short paper-zip
+.PHONY: help data features smoke benchmark rolling stats figures verify all rerun-cse recheck sensitivity folds paper paper-short paper-zip
 
 help:
-	@echo "Targets: data features smoke benchmark rolling stats figures tables verify all recheck rerun-cse sensitivity folds paper paper-zip"
+	@echo "Targets: data features smoke benchmark rolling stats figures verify all recheck rerun-cse sensitivity folds paper paper-zip"
 
 data:
 	$(PYTHON) scripts/download_data.py
@@ -41,9 +40,6 @@ stats:
 
 figures:
 	$(PYTHON) scripts/build_figures.py --results results/ --out figures/
-
-tables:
-	$(PYTHON) scripts/build_tables.py --results results/
 
 verify:
 	$(PYTHON) scripts/verify_claims.py
@@ -78,4 +74,4 @@ paper-zip: paper
 
 # End-to-end: download → feature check → full benchmark chain → derived artefacts.
 # Prefer `make verify` after a clone that already ships `results/`.
-all: data features benchmark rolling stats figures tables verify
+all: data features benchmark rolling stats figures verify

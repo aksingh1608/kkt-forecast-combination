@@ -206,7 +206,6 @@ def main() -> None:
         logger.info("Wrote %s", tuning_dir / "summary.csv")
 
     print("\nNext refresh dependent artefacts:")
-    print("  python scripts/run_multistep_benchmark.py --in", out_dir)
     print("  python scripts/run_rolling_origin_benchmark.py --out", out_dir / "multistep_rolling", "--n-origins 24 --n-jobs 1")
     print("  python scripts/run_significance_analysis.py --in", out_dir)
     print("  python scripts/plot_error_drift.py --in", out_dir, "--protocol both")
