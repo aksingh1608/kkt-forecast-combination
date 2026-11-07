@@ -2,6 +2,18 @@
 \toprule
 Data & train end & $n_{\mathrm{test}}$ & tree mass & zeroed & viol. & RMSE CSE & RMSE best member & best member \\
 \midrule
+UCI & 50\% & 1\,719 & 0.926 & 1 & 0 & 0.545 & 0.543 & CatBoost \\
+UCI & 60\% & 1\,719 & 0.851 & 1 & 0 & 0.596 & 0.576 & CatBoost \\
+UCI & 70\% & 1\,719 & 1.000 & 2 & 0 & 0.603 & 0.598 & CatBoost \\
+UCI & 80\% & 1\,719 & 1.000 & 3 & 0 & 0.638 & 0.636 & CatBoost \\
+OPSD-H & 50\% & 7\,059 & 1.000 & 3 & 0 & 2.407 & 2.399 & ExtraTrees \\
+OPSD-H & 60\% & 7\,059 & 0.790 & 2 & 0 & 0.204 & 0.227 & ExtraTrees \\
+OPSD-H & 70\% & 7\,059 & 0.872 & 1 & 0 & 0.233 & 0.204 & CatBoost \\
+OPSD-H & 80\% & 7\,059 & 0.965 & 1 & 0 & 0.159 & 0.157 & CatBoost \\
+OPSD-N & 50\% & 10\,046 & 1.000 & 2 & 0 & 596.2 & 614.6 & LightGBM \\
+OPSD-N & 60\% & 10\,046 & 1.000 & 2 & 0 & 529.7 & 541.7 & LightGBM \\
+OPSD-N & 70\% & 10\,046 & 1.000 & 2 & 0 & 534.8 & 551.1 & LightGBM \\
+OPSD-N & 80\% & 10\,046 & 1.000 & 1 & 0 & 591.8 & 619.1 & LightGBM \\
 ETTh1 & 50\% & 3\,450 & 0.977 & 2 & 0 & 0.943 & 0.892 & CatBoost \\
 ETTh1 & 60\% & 3\,450 & 1.000 & 3 & 0 & 0.992 & 1.000 & LightGBM \\
 ETTh1 & 70\% & 3\,450 & 0.999 & 2 & 0 & 0.902 & 0.874 & LightGBM \\
