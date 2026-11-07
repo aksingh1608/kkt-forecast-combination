@@ -63,7 +63,7 @@ paper: figures
 	$(PYTHON) scripts/build_paper.py
 	cd paper && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main >/dev/null && pdflatex -interaction=nonstopmode main | tail -2
 
-# the 10-page submission version: supplementary tables and Figs. 1, 4 to 6 left out
+# the 10-page submission version: supplementary tables and four figures left out (see paper/README.md)
 paper-short: paper
 	cd paper && sed 's/^\\fullversiontrue/\\fullversionfalse/' main.tex > main_short.tex && pdflatex -interaction=nonstopmode main_short >/dev/null && pdflatex -interaction=nonstopmode main_short >/dev/null && pdflatex -interaction=nonstopmode main_short | tail -2
 
