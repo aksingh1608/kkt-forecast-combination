@@ -1,6 +1,6 @@
 # Optional dependencies — deep learning zoo, Chronos, Streamlit UI
 # Not required to reproduce paper tables/figures (CPU artefacts).
-# Python 3.12.10 — pins from the same .venv as requirements.txt
+# Python 3.12
 # Install after requirements.txt:
 #   pip install -r requirements-optional.txt
 # For GPU torch, replace the torch pin with the appropriate CUDA wheel first.

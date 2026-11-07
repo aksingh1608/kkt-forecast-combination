@@ -1,4 +1,4 @@
-# Reproduce paper artefacts on CPU (Python 3.12.10).
+# Reproduce paper artefacts on CPU (Python 3.12).
 # Typical wall-clock on a 8-core laptop (approximate):
 #   data        minutes (network)
 #   features    <1 min
