@@ -14,7 +14,8 @@ make smoke
 make verify
 ```
 
-Optional GPU / Streamlit stack: `pip install -r requirements-optional.txt`.
+GPU packages: `pip install -r requirements-gpu.txt`. Optional deep learning models and
+Streamlit UI: `pip install -r requirements-optional.txt`.
 
 ## Rules
 
