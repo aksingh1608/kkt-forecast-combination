@@ -37,6 +37,7 @@
 \newcommand{\bestRecUCI}{SARIMA}
 \newcommand{\bestRecUCIVal}{0.889}
 \newcommand{\catRankOne}{6.8}
+\newcommand{\classicalPositiveList}{SARIMA on OPSD-N ($5.5\times10^{-5}$)}
 \newcommand{\collList}{LightGBM on UCI, Holt-Winters on OPSD-N}
 \newcommand{\collMaxGap}{0.003}
 \newcommand{\costRatioHgbMax}{390}
@@ -118,6 +119,7 @@
 \newcommand{\foldTreeMassMin}{0.851}
 \newcommand{\foldViol}{2}
 \newcommand{\foldViolDesc}{Holt-Winters on ETTh2 with training ending at 50\% ($\rho = 0.032$ against 0.004, $w = 4.8\times10^{-5}$); LightGBM on OPSD-H with training ending at 60\% ($\rho = 0.939$ against 0.939, $w = 0.058$)}
+\newcommand{\foldViolTimes}{twice}
 \newcommand{\foldWorse}{11}
 \newcommand{\friedChiOne}{69.47}
 \newcommand{\friedChiRec}{19.60}
@@ -134,6 +136,8 @@
 \newcommand{\identModelETThTwoRec}{LightGBM}
 \newcommand{\identTimesOne}{no times}
 \newcommand{\identTimesRec}{once}
+\newcommand{\linearWinsOneList}{OPSD-H and ETTh1}
+\newcommand{\linearWinsOneModel}{Ridge}
 \newcommand{\liteRTwoETTmax}{$-$2.74}
 \newcommand{\liteRTwoETTmin}{$-$4.23}
 \newcommand{\lossClausesOne}{OPSD-H ($p_{\mathrm{adj}} < 10^{-4}$, $d = -0.278$, $\delta = -0.116$); ETTh1 ($p_{\mathrm{adj}} < 10^{-4}$, $d = -0.130$, $\delta = -0.052$)}
@@ -144,6 +148,7 @@
 \newcommand{\lossTimesRec}{four times}
 \newcommand{\massETThOne}{1.000}
 \newcommand{\massETThTwo}{1.000}
+\newcommand{\massMin}{1.000}
 \newcommand{\massOPSDN}{0.9999}
 \newcommand{\massOPSDDEhousehold}{1.000}
 \newcommand{\massOPSDDEtotal}{1.000}
@@ -162,6 +167,7 @@
 \newcommand{\nBeatsOPSDDEtotalRec}{18}
 \newcommand{\nBeatsUCIOne}{17}
 \newcommand{\nBeatsUCIRec}{21}
+\newcommand{\nClassicalPositive}{1}
 \newcommand{\nCommonOne}{19}
 \newcommand{\nCommonRec}{19}
 \newcommand{\nDiverged}{3}
@@ -169,6 +175,7 @@
 \newcommand{\nIdentOne}{0}
 \newcommand{\nIdentRec}{1}
 \newcommand{\nKKTok}{20}
+\newcommand{\nLinearWinsOne}{2}
 \newcommand{\nLossOne}{2}
 \newcommand{\nLossRec}{4}
 \newcommand{\nMassOne}{5}
@@ -181,6 +188,7 @@
 \newcommand{\nPending}{0}
 \newcommand{\nRecTreeLeaders}{3}
 \newcommand{\nRefitSaved}{4}
+\newcommand{\nRefitSavedWord}{four}
 \newcommand{\nRemovedBig}{1}
 \newcommand{\nRemovedNeg}{0}
 \newcommand{\nRidgeDiverge}{1}
@@ -190,13 +198,15 @@
 \newcommand{\nSensLowTree}{4}
 \newcommand{\nTiesOne}{2}
 \newcommand{\nTiesRec}{0}
+\newcommand{\nTreeWinnersHOne}{5}
+\newcommand{\nTreeWinnersHTwoFour}{1}
 \newcommand{\nTreeWinsOne}{two}
 \newcommand{\nViolations}{0}
 \newcommand{\nWinsOne}{1}
 \newcommand{\nWinsRec}{0}
 \newcommand{\opsdhCleaned}{1}
-\newcommand{\orderingNoteOne}{Here the ordering by RMSE gap and the ordering by significance agree.}
-\newcommand{\orderingNoteRec}{Here the ordering by RMSE gap and the ordering by significance agree.}
+\newcommand{\orderingNoteOne}{Here they do: the larger the RMSE gap, the stronger the test's verdict.}
+\newcommand{\orderingNoteRec}{Here they do: the larger the RMSE gap, the stronger the test's verdict.}
 \newcommand{\pendingList}{none}
 \newcommand{\rankcseHOne}{6.70}
 \newcommand{\rankcseHOnemodel}{6.7}
@@ -244,12 +254,17 @@
 \newcommand{\sensRows}{30}
 \newcommand{\sensTreeMassMin}{0.095}
 \newcommand{\sensViol}{1}
+\newcommand{\sensViolTimes}{once}
 \newcommand{\sensZeroFracMax}{86}
 \newcommand{\sensZeroFracMin}{0}
 \newcommand{\supDegMax}{29.16}
 \newcommand{\supDegMin}{1.15}
 \newcommand{\tauETThOne}{0.65}
 \newcommand{\tauETThTwo}{0.67}
+\newcommand{\tauMax}{0.67}
+\newcommand{\tauMin}{-0.42}
+\newcommand{\tauOPSDHClause}{$\tau$ is negative on the household series ($\tau = -0.42$)}
+\newcommand{\tauOPSDHSentence}{On the household series, the setting most single-dataset papers study, the correlation is negative ($\tau = -0.42$, $p = 0.006$): the models that lead one step ahead are, on the whole, the ones that trail once they must consume their own forecasts.}
 \newcommand{\tauOPSDDEhousehold}{-0.42}
 \newcommand{\tauOPSDDEtotal}{0.47}
 \newcommand{\tauPETThOne}{0.000}

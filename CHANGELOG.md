@@ -45,6 +45,18 @@
 - `scripts/verify_claims.py` updated to the exact solver (tree mass 0.965 on
   OPSD-H, SARIMA ratio about 508 on OPSD-N, qualitative Friedman check).
 
+### Results regenerated (v1.2, 7 November 2026)
+
+All five datasets now carry the exact simplex solver, and OPSD-H the
+corrected target. Headline changes against the v1.0 artefacts: Ridge is the
+best one-step model on OPSD-H (0.147 kW) as well as ETTh1; the CSE wins
+OPSD-N, ties UCI and ETTh2 and loses OPSD-H and ETTh1 one step ahead; tree
+mass of the CSE weights rounds to 1.000 on every series; Friedman one-step
+chi2 = 69.47 (p = 5.6e-8), recursive 19.60 (p = 0.356); Kendall tau between
+the protocols is negative on OPSD-H (-0.42); refit-only-active saves 36 to
+53% of CSE training time on four series. `paper/main.tex` reads all of this
+from `paper/generated/`.
+
 ### Fixed: OPSD household target (v1.2, 7 November 2026)
 
 - `src/data/extra_loaders.py`: the OPSD-H target averaged the households'

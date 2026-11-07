@@ -129,6 +129,11 @@ def disp(model: str) -> str:
     return DISPLAY.get(model, model)
 
 
+def _times(n: int) -> str:
+    words = {0: "never", 1: "once", 2: "twice", 3: "three times", 4: "four times", 5: "five times"}
+    return words.get(n, f"{n} times")
+
+
 def macro(name: str, value: str) -> str:
     return f"\\newcommand{{\\{name}}}{{{value}}}\n"
 
@@ -282,6 +287,34 @@ def tab_main(lb: pd.DataFrame, done: set, out: Path, N: dict) -> None:
         r, o = rec.at["Ridge", ds], one.at["Ridge", ds]
         if np.isfinite(r) and r > 1e3 * o:
             div.append(DS_LABEL[ds])
+    linear = {m for m, f in FAMILY_GROUP.items() if f == "linear (lagged)"}
+    lw = [(ds, one[ds].dropna().idxmin()) for ds in DATASETS]
+    lw = [(ds, m) for ds, m in lw if m in linear]
+    N["nLinearWinsOne"] = str(len(lw))
+    N["linearWinsOneList"] = " and ".join(DS_LABEL[ds] for ds, _ in lw) or "none"
+    N["linearWinsOneModel"] = disp(lw[0][1]) if lw else "none"
+    # Kendall tau summary sentence
+    taus = {}
+    for ds in DATASETS:
+        a = piv["one_step"][ds].dropna(); b = piv["recursive"][ds].dropna()
+        idx = a.index.intersection(b.index)
+        taus[ds] = kendalltau(a[idx].rank(), b[idx].rank())
+    t_h, p_h = taus["OPSD_DE_household"]
+    if t_h < 0 and p_h < 0.05:
+        N["tauOPSDHSentence"] = (f"On the household series, the setting most single-dataset papers study, the correlation is "
+                                 f"negative ($\\tau = {t_h:.2f}$, $p = {p_h:.3f}$): the models that lead one step ahead are, "
+                                 f"on the whole, the ones that trail once they must consume their own forecasts.")
+        N["tauOPSDHClause"] = f"$\\tau$ is negative on the household series ($\\tau = {t_h:.2f}$)"
+    elif p_h >= 0.05:
+        N["tauOPSDHSentence"] = ("On the household series, the setting most single-dataset papers study, the one-step ranking "
+                                 "says little about the recursive one.")
+        N["tauOPSDHClause"] = f"$\\tau$ falls to {t_h:.2f} on the household series"
+    else:
+        N["tauOPSDHSentence"] = ("On the household series the two rankings are only moderately related.")
+        N["tauOPSDHClause"] = f"$\\tau$ is {t_h:.2f} on the household series"
+    tv = [t for t, _ in taus.values()]
+    N["tauMin"] = f"{min(tv):.2f}"
+    N["tauMax"] = f"{max(tv):.2f}"
     N["ridgeDivergeList"] = " and ".join(div) if div else "none"
     lab2ds = {v: k for k, v in DS_LABEL.items()}
     if div:
@@ -390,12 +423,16 @@ def tab_family(lb: pd.DataFrame, results: Path, done: set, out: Path, N: dict) -
     N["bestRankH1"] = disp(bestH1)
     N["bestRankH1Val"] = f"{rk[1].min():.1f}"
     # per-dataset winners at h=1 and h=24
+    tree_models = {m for m, f in FAMILY_GROUP.items() if f == "trees / boosting"}
     for h in (1, 24):
         wins = []
+        n_tree = 0
         for ds in DATASETS:
             col = piv.xs(h, axis=1, level="horizon")[ds]
             wins.append(f"{disp(col.idxmin())} on {DS_LABEL[ds]}")
+            n_tree += int(col.idxmin() in tree_models)
         N[f"winnersH{h}"] = ", ".join(wins)
+        N[f"nTreeWinnersH{h}"] = str(n_tree)
 
 
 def tab_weights(wdf: pd.DataFrame, masses: dict, out: Path, N: dict) -> None:
@@ -423,6 +460,17 @@ def tab_weights(wdf: pd.DataFrame, masses: dict, out: Path, N: dict) -> None:
             N[f"w{m}{ds}"] = f"{piv.at[m, ds]:.3f}"
     n_one = sum(1 for ds in DATASETS if round(masses[ds], 3) >= 1.0)
     N["nMassOne"] = str(n_one)
+    N["massMin"] = f"{min(masses.values()):.3f}"
+    cp = []
+    for ds in DATASETS:
+        for m in ("sarima", "hw"):
+            v = piv.at[m, ds]
+            if v > 1e-9:
+                e = int(np.floor(np.log10(v)))
+                vs = f"{v:.3f}" if v >= 1e-3 else rf"${v/10**e:.1f}\times10^{{{e}}}$"
+                cp.append(f"{MEMBER_LABEL[m]} on {DS_LABEL[ds]} ({vs})")
+    N["nClassicalPositive"] = str(len(cp))
+    N["classicalPositiveList"] = "; ".join(cp) or "none"
     N["massOPSDN"] = f"{masses['OPSD_DE_total']:.4f}"
     v = piv.at["sarima", "OPSD_DE_total"]
     e = int(np.floor(np.log10(v)))
@@ -538,7 +586,7 @@ def tab_dm(results: Path, lb: pd.DataFrame, done: set, out: Path, N: dict) -> No
                 info.append((ds, float(N[k2 + "gap"]), v == "CSE worse"))
         N[f"tieClauses{key}"] = "; ".join(clauses["tie"]) or "none"
         N[f"lossClauses{key}"] = "; ".join(clauses["CSE worse"]) or "none"
-        note = "Here the ordering by RMSE gap and the ordering by significance agree."
+        note = "Here they do: the larger the RMSE gap, the stronger the test's verdict."
         for ds_a, gap_a, sig_a in info:
             for ds_b, gap_b, sig_b in info:
                 if (not sig_a) and sig_b and gap_a > gap_b:
@@ -654,6 +702,7 @@ def tab_sensitivity(results: Path, out: Path, N: dict) -> None:
     N["sensRows"] = str(len(df))
     N["sensDatasets"] = ", ".join(DS_LABEL[d] for d in DATASETS if d in set(df.dataset))
     N["sensViol"] = str(int(df.necessity_violations.sum()))
+    N["sensViolTimes"] = _times(int(df.necessity_violations.sum()))
     N["sensTreeMassMin"] = f"{df.tree_mass.min():.3f}"
     N["sensZeroFracMin"] = f"{(df.n_zero / df.K).min()*100:.0f}"
     N["nSensAnyZero"] = str(int((df.n_zero > 0).sum()))
@@ -723,6 +772,7 @@ def tab_folds(results: Path, out: Path, N: dict) -> None:
                 rows.append((ds, save, float(rt.at[ds, "fit_time_s"]), full[ds]))
         real = [r for r in rows if r[1] >= 5.0]
         N["nRefitSaved"] = str(len(real))
+        N["nRefitSavedWord"] = {0: "none", 1: "one", 2: "two", 3: "three", 4: "four", 5: "all five"}[len(real)]
         N["refitSaveMin"] = f"{min(r[1] for r in real):.0f}" if real else "0"
         N["refitSaveMax"] = f"{max(r[1] for r in real):.0f}" if real else "0"
         none = [r for r in rows if r[1] < 5.0]
@@ -738,6 +788,7 @@ def tab_folds(results: Path, out: Path, N: dict) -> None:
         (out / "tab_refit.tex").write_text("\n".join(lines) + "\n")
     N["foldDatasets"] = ", ".join(DS_LABEL[d] for d in DATASETS if d in set(df.dataset))
     N["foldViol"] = str(int(df.necessity_violations.sum()))
+    N["foldViolTimes"] = _times(int(df.necessity_violations.sum()))
     N["foldTreeMassMin"] = f"{df.tree_mass.min():.3f}"
     N["foldGapMin"] = f"{df.cse_minus_best_pct.min():+.1f}".replace("-", "$-$").replace("+", "$+$")
     N["foldGapMax"] = f"{df.cse_minus_best_pct.max():+.1f}".replace("-", "$-$").replace("+", "$+$")
