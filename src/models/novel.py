@@ -33,9 +33,10 @@ FAHE combines them via a **convex non-negative meta-learner**:
          + w_lgbm   · ŷ_lgbm(t),
     s.t. w_i ≥ 0  and  Σ w_i = 1.
 
-Weights are estimated by non-negative least-squares (NNLS) on a held-out
-validation slice of the training set, then the base models are refitted
-on the *complete* training set before producing the test forecast.
+Weights are the exact least-squares solution on the probability simplex,
+computed on a held-out validation slice of the training set. The members
+with positive weight are then refit on the *complete* training set before
+producing the test forecast.
 
 Why this is a defensible research contribution
 ---------------------------------------------
@@ -168,7 +169,7 @@ class FAHEForecaster(ForecastModel):
     validation_frac: float = 0.15
     min_validation_size: int = 48
     # When True, also train CatBoost and ExtraTrees on the engineered
-    # features and let NNLS pick weights across the full pool. Empirically
+    # features and let the simplex solve pick weights across the full pool. Empirically
     # this lifts FAHE above plain CatBoost on energy benchmarks.
     use_extended_pool: bool = True
     # When True, the second (full-training) fit is run only for members whose
@@ -669,7 +670,7 @@ class FAHEForecaster(ForecastModel):
     def diagnostics(self, dataset: str = "unknown"):
         """Return a :class:`CSEDiagnostics` built from the validation slice.
 
-        The diagnostics use the *validation-slice* errors on which the NNLS
+        The diagnostics use the *validation-slice* errors on which the simplex
         weights were actually learned — the correct quantity for verifying
         Proposition 1. See ``src.evaluation.kkt_analysis``.
         """

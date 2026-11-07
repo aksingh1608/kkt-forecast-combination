@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Ensemble members: CSE / FAHE stacking, NNLS weights, simplex projection."""
+"""Ensemble members: CSE / FAHE stacking with exact weights on the simplex."""
 
 from src.models.novel import CSEForecaster, FAHEForecaster
 

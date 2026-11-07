@@ -32,7 +32,7 @@ deviations.
 This module operationalises those results as first-class artefacts:
 
 * :class:`CSEDiagnostics` — the per-base-learner ``σ_i``, ``ρ_ij`` and the
-  learned NNLS weights, computed on the *validation* slice (the correct
+  learned simplex weights, computed on the *validation* slice (the correct
   quantity — the paper's earlier draft mistakenly used test-slice values).
 * :func:`kkt_conditions` — evaluates the KKT residuals ``(Σ w)_i - λ``
   and their signs for every member, so the paper can *report* the
@@ -66,7 +66,7 @@ class CSEDiagnostics:
     """Per-dataset diagnostics for the Convex Stacking Ensemble.
 
     All second-order statistics are computed on the **validation slice**
-    (the tail of the training set held out for NNLS), because that is the
+    (the tail of the training set held out for the weights), because that is the
     slice on which the weights are learned. This is the correct quantity
     for verifying Proposition 1; the test-slice equivalents are also
     stored for reference but should not be used in the theorem's
@@ -145,7 +145,7 @@ def compute_cse_diagnostics(
     extra: dict | None = None,
     centred: bool = False,
 ) -> CSEDiagnostics:
-    """Assemble a :class:`CSEDiagnostics` from validation errors + NNLS weights.
+    """Assemble a :class:`CSEDiagnostics` from validation errors + simplex weights.
 
     Parameters
     ----------

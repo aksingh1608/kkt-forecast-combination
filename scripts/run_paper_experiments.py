@@ -14,10 +14,10 @@
 
 """Full paper runner: 5 datasets × 23 models × 2 protocols.
 
-Generates every headline artefact needed for the IEEE-Transactions revision:
+Generates every headline artefact needed for the paper:
 
 * ``results/leaderboards.csv`` — long-format (dataset × protocol × model × metrics).
-* ``results/cse_weights_by_dataset.csv`` — the KKT weight table (paper's Table II).
+* ``results/cse_weights_by_dataset.csv`` — the KKT weight table.
 * ``results/predictions/{dataset}__{protocol}__{model}.parquet`` —
   the full y_true / y_pred series (used later by the significance script).
 * ``results/cse_diagnostics/{dataset}.pkl`` — the CSEDiagnostics

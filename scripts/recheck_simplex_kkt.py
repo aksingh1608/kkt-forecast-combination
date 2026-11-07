@@ -17,7 +17,7 @@
 Reads the validation errors saved in ``results/cse_diagnostics/*.pkl`` and,
 without refitting any model, reports for every dataset and member:
 
-* the weight stored with the artefacts (NNLS, then L1 normalisation),
+* the weight stored with the artefacts,
 * the exact simplex-constrained weight,
 * the uncentred error-scale ratio and correlation against the leader,
 * the Proposition 1 verdict (admissible / excluded) and whether it agrees
@@ -30,7 +30,7 @@ Run::
     python scripts/recheck_simplex_kkt.py --out results/tables/kkt_simplex_recheck.csv
 
 This script needs no raw data. It does NOT update test-set scores: those
-require ``make benchmark rolling stats figures tables``.
+require ``scripts/rerun_cse.py`` and ``scripts/run_significance_analysis.py``.
 """
 
 from __future__ import annotations

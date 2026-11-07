@@ -6,13 +6,9 @@
 %   * Every table and every inline number comes from generated/*.tex,
 %     written by  python scripts/build_paper.py  from results/.
 %     Do not type numbers into this file.
-%   * Entries printed in red are CSE results produced by the previous
-%     (NNLS then normalise) solver on datasets that have not yet been
-%     refit with  python scripts/rerun_cse.py.  The red disappears by
-%     itself once build_paper.py finds those datasets in
-%     results/tables/cse_refit_times.csv.
-%   * Figures: figures/fig2_kkt_boundary.pdf, fig3_cd_diagrams_*.pdf
-%     (python scripts/build_figures.py). Fig. 1 is TikZ in this file.
+%   * Figures: python scripts/build_figures.py and
+%     python scripts/build_paper_figures.py. Fig. 1 is TikZ
+%     (fig1_architecture.tex). See docs/figure_map.md.
 %
 %  Compile:  pdflatex main; bibtex not needed (thebibliography inline);
 %            pdflatex main; pdflatex main.

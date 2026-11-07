@@ -14,10 +14,11 @@
 
 """Regenerate manuscript figures into ``figures/`` as PNG (300 dpi) and PDF.
 
-Writes Fig. 2 (KKT boundary) and Fig. 3 (CD diagrams) of the manuscript from
-the CSVs and pickles under ``results/``, keeps the rendered Fig. 1, and copies
-the DM heat maps (``fig5_dm_heatmap__*``, not used by the paper). Figs. 4 to 6
-of the manuscript come from ``scripts/build_paper_figures.py``.
+Writes ``fig2_kkt_boundary`` and ``fig3_cd_diagrams_*`` from the CSVs and
+pickles under ``results/``, keeps the rendered ``fig1_architecture``, and copies
+the DM heat maps (``fig5_dm_heatmap__*``, not used by the paper). The files
+``fig4_dm_pvalues``, ``fig5_error_drift_uci`` and ``fig6_horizon_ranks`` come
+from ``scripts/build_paper_figures.py``. See ``docs/figure_map.md``.
 
 Run::
 

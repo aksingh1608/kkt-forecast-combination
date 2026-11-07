@@ -14,15 +14,15 @@
 
 """Rolling-origin per-horizon leaderboard (paper-grade h-step metrics).
 
-Unlike ``run_multistep_benchmark.py`` (prefix of one rollout — h=1 is a
-single point), this script:
+Metrics are not taken from a prefix of one rollout, where h=1 would be a
+single point. Instead, this script:
 
 1. Fits each model once on the chronological train split.
 2. Places ``n_origins`` evenly spaced forecast origins across the test window.
 3. At origin *o*, seeds history with **observed** y up to *o*, then rolls
    out ``max(horizons)`` recursive steps.
 4. Reports RMSE/MAE/... of the cross-section of horizon-*h* errors averaged
-   over all origins (IEEE-TSG style).
+   over all origins.
 
 Run::
 

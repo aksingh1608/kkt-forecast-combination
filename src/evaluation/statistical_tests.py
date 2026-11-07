@@ -44,8 +44,7 @@ Omnibus tests
 Visualisation
 -------------
 * :func:`plot_dm_pvalue_heatmap` — Holm-corrected DM p-value heatmap; the
-  standard "significance matrix" figure of IEEE-TSG / T-PWRS forecasting
-  papers.
+  standard "significance matrix" figure of forecasting papers.
 """
 
 from __future__ import annotations

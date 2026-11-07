@@ -27,7 +27,7 @@ Two interpretations of "horizon-h" error are supported:
    of the original implementation, kept for backward compatibility.
 2. **Rolling-origin mode** (``mode="rolling"``). Metrics on the
    *cross-section* of horizon-``h`` errors gathered from many forecast
-   origins — the semantics used by IEEE-TSG / T-PWRS papers and the one
+   origins — the semantics used in the load forecasting literature and the one
    that gives meaningful DM tests. Requires a list of (origin, prediction)
    tuples.
 """

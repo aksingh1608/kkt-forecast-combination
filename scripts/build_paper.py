@@ -14,18 +14,20 @@
 
 """Generate every manuscript table and inline number from ``results/``.
 
-Nothing in the paper is typed by hand. This script writes LaTeX fragments to
+This script writes LaTeX fragments to
 ``paper/generated/`` which ``paper/main.tex`` includes:
 
 * ``tab_main.tex``        test RMSE, both protocols, mean rank (Table II)
 * ``tab_family.tex``      degradation ratios and rolling-origin ranks (Table III)
 * ``tab_weights.tex``     simplex weights and tree mass (Table IV)
 * ``tab_agree.tex``       exclusion boundary against learned weight (Table V)
-* ``tab_dm.tex``          Diebold-Mariano, CSE against the best model (Table VI)
-* ``tab_tunedcost.tex``   tuned lite-DL configurations and training times (Table VII)
-* ``tab_sensitivity.tex`` member-pool sensitivity (new)
-* ``tab_folds.tex``       expanding-window folds (new)
-* ``tab_app.tex``         rolling-origin RMSE by horizon (appendix)
+* ``tab_sensitivity.tex`` member-pool sensitivity (Table VI)
+* ``tab_folds.tex``       expanding-window folds (Table VII)
+* ``tab_dm.tex``          Diebold-Mariano, CSE against the best model (Table VIII)
+* ``tab_tuned.tex``       tuned lite-DL configurations (Table IX)
+* ``tab_refit.tex``       CSE time when only active members are refit (Table X)
+* ``tab_cost.tex``        training times (Table XI)
+* ``tab_app.tex``         rolling-origin RMSE by horizon (Table XII, appendix)
 * ``numbers.tex``         ``\\newcommand`` macros for every inline number
 
 CSE rows of datasets that have not been refit with the exact solver (those

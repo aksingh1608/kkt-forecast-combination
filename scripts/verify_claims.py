@@ -83,7 +83,7 @@ def check_boundary(weights: pd.DataFrame) -> None:
 
 
 def check_opsd_sarima_ratio(weights: pd.DataFrame) -> None:
-    # sigma is the uncentred validation RMSE since v1.1 (was the centred std, ratio 243)
+    # sigma is the uncentred validation RMSE
     g = weights[weights.dataset == "OPSD_DE_total"].set_index("member")
     ratio = float(g.loc["sarima", "sigma"]) / float(g.loc["lgbm", "sigma"])
     if abs(ratio - 508) > 2.0:
