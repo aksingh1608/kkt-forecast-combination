@@ -24,8 +24,7 @@ lightning_logs/
 
 # Experiment checkpoints and packing artefacts
 **/checkpoints/
-paper_pack/
-paper_pack.zip
+paper_overleaf.zip
 
 # OS / editor
 .DS_Store
@@ -40,10 +39,6 @@ Thumbs.db
 dist/
 build/
 
-# Internal audit notes (keep on disk, never publish)
-AUDIT.md
-PREPUSH_AUDIT.md
-
 # LaTeX build files
 paper/*.aux
 paper/*.out
@@ -52,6 +47,5 @@ paper/*.synctex.gz
 paper/*.fls
 paper/*.fdb_latexmk
 paper/*.pdf
-paper/b*.log
 paper/*.txt
 paper/main_short.*
